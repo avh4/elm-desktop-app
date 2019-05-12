@@ -1,4 +1,4 @@
 ## Development info
 
-- (no tests yet)
-- Run: `./build-app.sh example`
+- Tests: `npm test`
+- Run: `npm start`

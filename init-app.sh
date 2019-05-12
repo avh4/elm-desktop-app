@@ -1,5 +1,5 @@
 #!/bin/bash
 
-elm init
-elm install elm/json
+yes | elm init
+yes | elm install elm/json
 

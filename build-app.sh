@@ -2,7 +2,7 @@
 
 set -euxo pipefail
 
-TEMPLATE_DIR=$(realpath .)
+TEMPLATE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PROJECT_DIR=$(realpath "${1:-.}")
 BUILD_DIR=$(realpath _build)
 
@@ -23,6 +23,3 @@ popd
 cp "$TEMPLATE_DIR"/template.js "$BUILD_DIR"/index.js
 cp "$TEMPLATE_DIR"/template.html "$BUILD_DIR"/index.html
 
-pushd "$BUILD_DIR"
-npx electron .
-popd

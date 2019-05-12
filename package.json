@@ -1,0 +1,27 @@
+{
+  "name": "elm-desktop-app",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "cucumber-js",
+    "start": "./build-app.sh example && (cd _build && npx electron .)"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/avh4/elm-desktop-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/avh4/elm-desktop-app/issues"
+  },
+  "homepage": "https://github.com/avh4/elm-desktop-app#readme",
+  "devDependencies": {
+    "cucumber": "^5.1.0",
+    "expect": "^24.8.0",
+    "jasmine-expect": "^4.0.1",
+    "shelljs": "^0.8.3",
+    "spectron": "^5.0.0"
+  }
+}
