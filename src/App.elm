@@ -28,25 +28,26 @@ program :
     }
     -> Program () model msg
 program config =
+    let
+        saveFiles ( model, cmd ) =
+            ( model
+            , Cmd.batch
+                [ cmd
+                , [ config.files model ]
+                    |> List.map encodeFile
+                    |> writeOut
+                ]
+            )
+    in
     Browser.document
         { init =
-            \_ ->
-                let
-                    ( model, cmd ) =
-                        config.init
-
-                    saveFiles =
-                        [ config.files model ]
-                            |> List.map encodeFile
-                            |> writeOut
-                in
-                ( model
-                , Cmd.batch
-                    [ cmd
-                    , saveFiles
-                    ]
-                )
-        , update = config.update
+            \() ->
+                config.init
+                    |> saveFiles
+        , update =
+            \msg model ->
+                config.update msg model
+                    |> saveFiles
         , subscriptions = config.subscriptions
         , view =
             \model ->
