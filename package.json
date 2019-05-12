@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "test": "cucumber-js",
-    "start": "./build-app.sh example && (cd _build && npx electron .)"
+    "start": "./build-app.sh example && (cd example/_build && npx electron .)"
   },
   "repository": {
     "type": "git",
