@@ -15,11 +15,11 @@ After(function() {
 
 After(function() {
   if (this.app) {
-    this.app.stop();
+    return this.app.stop();
   }
 });
 
-When('I create a new app', function () {
+function initProject() {
   const result = shell.exec("../init-app.sh");
   expect(result.code).toEqual(0);
 
@@ -27,11 +27,30 @@ When('I create a new app', function () {
   elmJson = JSON.parse(fs.readFileSync("elm.json"));
   elmJson['source-directories'].push("../src");
   fs.writeFileSync("elm.json", JSON.stringify(elmJson));
+}
+
+Given('an existing app', function () {
+  initProject();
+  this.Main.Msg = "type Msg = Loaded Int | Inc | NoOp";
+  this.Main.main.init = "(0, Cmd.none)";
+  this.Main.main.update = "\\msg model -> \n\
+    case msg of\n\
+        NoOp -> (model, Cmd.none)\n\
+        Inc -> (model+1, Cmd.none)\n\
+        Loaded i -> (i, Cmd.none)";
+  this.Main.main.view = "\\model -> Html.button [onClick Inc] [Html.text \"+\"]";
+  this.Main.main.files = "App.jsonFile \"test-app.json\" Loaded (App.object identity |> App.field \"count\" identity App.int)";
+  this.Main.main.noOp = "NoOp";
+  return this.writeMain();
+});
+
+When('I create a new app', function () {
+  initProject();
 });
 
 When('I make change my program\'s files to', function (docString) {
   this.Main.main.files = docString;
-  this.writeMain();
+  return this.writeMain();
 });
 
 When('I run the app', function () {
@@ -47,6 +66,15 @@ When('I run the app', function () {
   this.app = app;
 
   return app.start();
+});
+
+When('click {string}', function (label) {
+  this.app.client.waitUntilTextExists("body", label);
+  return this.app.client.element("button").click(); // TODO: find the exact button
+});
+
+Given('a JSON file {string}', function (filename, docString) {
+  fs.writeFileSync(`./${filename}`, docString);
 });
 
 Then('the JSON file {string} is', function (filename, docString) {

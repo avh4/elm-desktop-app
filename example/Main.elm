@@ -20,17 +20,26 @@ main =
         , subscriptions = \_ -> Sub.none
         , view = view
         , files = files
+        , noOp = NoOp
         }
 
 
 type Msg
-    = Increment
+    = NoOp
+    | Loaded Model
+    | Increment
     | Decrement
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
+        NoOp ->
+            model
+
+        Loaded newModel ->
+            newModel
+
         Increment ->
             { model | count = model.count + 1 }
 
@@ -63,8 +72,8 @@ view model =
             ]
 
 
-files : App.File Model
+files : App.File Model Msg
 files =
     App.object Model
         |> App.field "count" .count App.int
-        |> App.jsonFile "example-app.json"
+        |> App.jsonFile "example-app.json" Loaded

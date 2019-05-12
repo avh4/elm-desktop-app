@@ -24,4 +24,18 @@ ipc.on('write-out', function (event, files) {
   });
 });
 
+ipc.on('load-file', function(event, filename) {
+  fs.readFile(filename, 'utf-8', (err, content) => {
+    if (err) {
+      if (err.code === 'ENOENT') {
+        event.reply('file-loaded', [filename, null]);
+      } else {
+        throw err;
+      }
+    } else {
+      event.reply('file-loaded', [filename, content]);
+    }
+  });
+});
+
 app.on('ready', createWindow);

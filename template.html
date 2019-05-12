@@ -17,6 +17,13 @@
          app.ports.writeOut.subscribe(function(files) {
              ipc.send('write-out', files);
          });
+         app.ports.loadFile.subscribe(function(filename) {
+             ipc.send('load-file', filename);
+         });
+
+         ipc.on('file-loaded', function(event, data) {
+             app.ports.fileLoaded.send(data);
+         });
         </script>
     </body>
 </html>
