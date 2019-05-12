@@ -4,4 +4,4 @@
 ## Development info
 
 - Tests: `npm test`
-- Run: `npm start`
+- Run the example: `npm start`
