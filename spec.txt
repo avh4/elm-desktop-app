@@ -1,0 +1,17 @@
+
+Can write an Elm app that writes data files
+- Run: init-app.sh
+- Edit Main.elm:
+    import App
+    import Html
+    import Json.Encode as Json
+    main = App.program
+        { init = ((), Cmd.none)
+        , update = \() () -> ((), Cmd.none)
+        , subscriptions = \() -> Sub.none
+        , view = \() -> Html.text ""
+        , files = \() -> App.jsonFile "test-app.json" Json.object [ ("key", Json.string "value") ]
+        }
+- Run: build-app.sh
+- Expect test-app.json:
+    {"key":"value"}

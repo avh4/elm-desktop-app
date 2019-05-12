@@ -1,0 +1,22 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Main</title>
+        <script src="elm.js"></script>
+    </head>
+
+    <body>
+        <div id="elm"></div>
+        <script>
+         const electron = require('electron');
+         const ipc = electron.ipcRenderer;
+         var app = Elm.Main.init({
+             node: document.getElementById('elm')
+         });
+         app.ports.writeOut.subscribe(function(files) {
+             ipc.send('write-out', files);
+         });
+        </script>
+    </body>
+</html>
