@@ -4,7 +4,7 @@ set -euxo pipefail
 
 TEMPLATE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PROJECT_DIR=$(realpath "${1:-.}")
-BUILD_DIR=$(realpath _build)
+BUILD_DIR=$(realpath .)/_build
 
 
 mkdir -p "$BUILD_DIR"
