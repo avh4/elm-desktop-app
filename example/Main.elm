@@ -63,10 +63,8 @@ view model =
             ]
 
 
-files : Model -> App.File
-files model =
-    App.jsonFile "example-app.json"
-        (Json.object
-            [ ( "count", Json.int model.count )
-            ]
-        )
+files : App.File Model
+files =
+    App.object Model
+        |> App.field "count" .count App.int
+        |> App.jsonFile "example-app.json"

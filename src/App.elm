@@ -1,6 +1,7 @@
 port module App exposing
     ( program
     , File, jsonFile
+    , Object, field, int, object, staticString
     )
 
 {-|
@@ -24,7 +25,7 @@ program :
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
     , view : model -> Html msg
-    , files : model -> File
+    , files : File model
     }
     -> Program () model msg
 program config =
@@ -33,8 +34,8 @@ program config =
             ( model
             , Cmd.batch
                 [ cmd
-                , [ config.files model ]
-                    |> List.map encodeFile
+                , [ config.files ]
+                    |> List.map (\f -> encodeFile f model)
                     |> writeOut
                 ]
             )
@@ -59,15 +60,48 @@ program config =
         }
 
 
-type File
-    = File String String
+type File model
+    = File String (Object model model)
 
 
-encodeFile : File -> ( String, String )
-encodeFile (File filename content) =
-    ( filename, content )
+encodeFile : File model -> model -> ( String, String )
+encodeFile (File filename (Object fields)) model =
+    let
+        json =
+            Json.object
+                (List.map (\( k, f ) -> ( k, f model )) fields)
+    in
+    ( filename, Json.encode 0 json )
 
 
-jsonFile : String -> Json.Value -> File
-jsonFile filename jsonContent =
-    File filename (Json.encode 0 jsonContent)
+jsonFile : String -> Object a a -> File a
+jsonFile filename json =
+    File filename json
+
+
+type Object a b
+    = Object (List ( String, b -> Json.Value ))
+
+
+object : a -> Object a b
+object _ =
+    Object []
+
+
+type Field a
+    = Field (a -> Json.Value)
+
+
+field : String -> (x -> a) -> Field a -> Object (a -> b) x -> Object b x
+field name get (Field toJson) (Object fields) =
+    Object (( name, get >> toJson ) :: fields)
+
+
+int : Field Int
+int =
+    Field Json.int
+
+
+staticString : String -> Field a
+staticString value =
+    Field (\_ -> Json.string value)
