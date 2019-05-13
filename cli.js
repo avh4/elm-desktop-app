@@ -63,6 +63,7 @@ function build() {
   }
   shell.popd();
 
+  shell.rm("-Rf", path.join(GEN_DIR, "src"));
   shell.cp("-R", path.join(TEMPLATE_DIR, "src"), path.join(GEN_DIR, "src"));
   shell.cp(path.join(TEMPLATE_DIR, "src", "DesktopApp", "RealPorts.elm"), path.join(GEN_DIR, "src", "DesktopApp", "Ports.elm"));
 
