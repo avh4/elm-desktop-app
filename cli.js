@@ -25,10 +25,24 @@ function main(args) {
     shell.exec("yes | elm install elm/json");
     break;
 
+  case "package":
+    build();
+
+    shell.pushd(BUILD_DIR);
+    if (!shell.test("-e", "node_modules/electron-builder")) {
+      shell.exec("npm install --save-dev electron-builder");
+    }
+    shell.exec(path.join(BUILD_DIR, "node_modules", ".bin", "electron-builder") + " --linux --windows --mac");
+    shell.popd();
+
+    break;
+
   default:
     process.stdout.write("Usage:\n");
     process.stdout.write("    elm-desktop-app init [<directory>]\n");
     process.stdout.write("    elm-desktop-app build [<directory>]\n");
+    process.stdout.write("    elm-desktop-app run [<directory>]\n");
+    process.stdout.write("    elm-desktop-app package [<directory>]\n");
     process.stdout.write("\n");
     process.stdout.write("Options:\n");
     process.stdout.write("    directory: defaults to the current directory\n");
