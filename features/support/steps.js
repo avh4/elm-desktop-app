@@ -2,11 +2,13 @@ const { Given, When, Then, Before, After } = require("cucumber");
 const shell = require("shelljs");
 const expect = require("expect");
 const fs = require("fs");
+const path = require("path");
 
 Before(function() {
   shell.rm("-Rf", "_test");
   shell.mkdir("-p", "_test");
   shell.cd("_test");
+  shell.exec("npm install ../");
 });
 
 After(function() {
@@ -54,13 +56,13 @@ When('I make change my program\'s files to', function (docString) {
 });
 
 When('I run the app', function () {
-  const result = shell.exec("../build-app.sh");
+  const result = shell.exec(path.join(__dirname, "..", "..", "cli.js"));
   expect(result.code).toEqual(0);
 
   var Application = require('spectron').Application;
   var app = new Application({
-    path: './_build/node_modules/.bin/electron',
-    args: ['./_build']
+    path: './elm-stuff/elm-desktop-app/node_modules/.bin/electron',
+    args: ['./elm-stuff/elm-desktop-app']
   });
 
   this.app = app;

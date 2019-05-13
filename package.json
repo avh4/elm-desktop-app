@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "test": "cucumber-js",
-    "start": "./build-app.sh example && (cd example/_build && npx electron .)"
+    "start": "./$npm_package_bin_elm_desktop_app example && (cd example/elm-stuff/elm-desktop-app && ./node_modules/.bin/electron .)"
   },
   "repository": {
     "type": "git",
@@ -17,6 +17,9 @@
     "url": "https://github.com/avh4/elm-desktop-app/issues"
   },
   "homepage": "https://github.com/avh4/elm-desktop-app#readme",
+  "bin": {
+    "elm-desktop-app": "cli.js"
+  },
   "devDependencies": {
     "cucumber": "^5.1.0",
     "expect": "^24.8.0",
