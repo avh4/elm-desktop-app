@@ -1,5 +1,8 @@
 const { setWorldConstructor } = require("cucumber");
 const fs = require("fs");
+const shell = require("shelljs");
+const path = require("path");
+const expect = require("expect");
 
 class CustomWorld {
   constructor() {
@@ -14,6 +17,11 @@ class CustomWorld {
         noOp: "()"
       }
     };
+  }
+
+  runElmDesktopApp(args) {
+    const result = shell.exec(path.join(__dirname, "..", "..", "cli.js") + " " + args.join(" ")); // TODO: properly escape this
+    expect(result.code).toEqual(0);
   }
 
   writeMain() {

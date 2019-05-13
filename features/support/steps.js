@@ -21,9 +21,8 @@ After(function() {
   }
 });
 
-function initProject() {
-  const result = shell.exec("../init-app.sh");
-  expect(result.code).toEqual(0);
+function initProject(world) {
+  world.runElmDesktopApp(["init"]);
 
   // hack the elm.json to use the unpublished packge in this project
   elmJson = JSON.parse(fs.readFileSync("elm.json"));
@@ -32,7 +31,7 @@ function initProject() {
 }
 
 Given('an existing app', function () {
-  initProject();
+  initProject(this);
   this.Main.Msg = "type Msg = Loaded Int | Inc | NoOp";
   this.Main.main.init = "(0, Cmd.none)";
   this.Main.main.update = "\\msg model -> \n\
@@ -47,7 +46,7 @@ Given('an existing app', function () {
 });
 
 When('I create a new app', function () {
-  initProject();
+  initProject(this);
 });
 
 When('I make change my program\'s files to', function (docString) {
@@ -56,8 +55,7 @@ When('I make change my program\'s files to', function (docString) {
 });
 
 When('I run the app', function () {
-  const result = shell.exec(path.join(__dirname, "..", "..", "cli.js"));
-  expect(result.code).toEqual(0);
+  this.runElmDesktopApp(["build"]);
 
   var Application = require('spectron').Application;
   var app = new Application({

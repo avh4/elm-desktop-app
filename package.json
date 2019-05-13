@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "test": "cucumber-js",
-    "start": "./$npm_package_bin_elm_desktop_app example && (cd example/elm-stuff/elm-desktop-app && ./node_modules/.bin/electron .)"
+    "start": "./$npm_package_bin_elm_desktop_app build example && (cd example/elm-stuff/elm-desktop-app && ./node_modules/.bin/electron .)"
   },
   "repository": {
     "type": "git",
