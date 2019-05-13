@@ -28,7 +28,7 @@ class CustomWorld {
     const Main = this.Main;
     return new Promise(function(resolve) {
       const stream = fs.createWriteStream("Main.elm");
-      stream.write("import App\n");
+      stream.write("import DesktopApp as App\n");
       stream.write("import Html\n");
       stream.write("import Html.Events exposing (onClick)\n");
       stream.write("import Json.Encode as Json\n");

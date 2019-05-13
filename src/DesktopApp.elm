@@ -1,4 +1,4 @@
-module App exposing
+module DesktopApp exposing
     ( program
     , File, jsonFile, JsonMapping, jsonMapping, withInt, staticString, with
     )

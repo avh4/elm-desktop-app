@@ -1,7 +1,7 @@
 module Main exposing (main)
 
-import App
 import BeautifulExample
+import DesktopApp as App
 import Html exposing (Html)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
