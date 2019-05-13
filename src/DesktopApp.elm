@@ -128,7 +128,7 @@ encodeFile (File filename (JsonMapping fields _)) model =
 
 {-| A `File` that is serialized as JSON.
 -}
-jsonFile : String -> (a -> msg) -> JsonMapping a a -> File a msg
+jsonFile : String -> (b -> msg) -> JsonMapping b a -> File a msg
 jsonFile filename toMsg (JsonMapping encode decode) =
     File filename (JsonMapping encode (Json.Decode.map toMsg decode))
 
