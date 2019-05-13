@@ -3,12 +3,38 @@
 const shell = require("shelljs");
 const path = require("path");
 
-switch (process.argv[2]) {
-case "build":
-  const TEMPLATE_DIR = __dirname;
-  const PROJECT_DIR = path.resolve(process.argv[3] || process.cwd());
-  const BUILD_DIR = path.join(PROJECT_DIR, "elm-stuff", "elm-desktop-app");
+const TEMPLATE_DIR = __dirname;
+const PROJECT_DIR = path.resolve(process.argv[3] || process.cwd());
+const BUILD_DIR = path.join(PROJECT_DIR, "elm-stuff", "elm-desktop-app");
 
+function main(args) {
+  switch (args[0]) {
+  case "build":
+    build();
+    break;
+
+  case "run":
+    build();
+    shell.exec(path.join(BUILD_DIR, "node_modules", ".bin", "electron") + " " + BUILD_DIR) // TODO: stop using shelljs to properly escape output here
+    break;
+
+  case "init":
+    shell.exec("yes | elm init");
+    shell.exec("yes | elm install elm/json");
+    break;
+
+  default:
+    process.stdout.write("Usage:\n");
+    process.stdout.write("    elm-desktop-app init [<directory>]\n");
+    process.stdout.write("    elm-desktop-app build [<directory>]\n");
+    process.stdout.write("\n");
+    process.stdout.write("Options:\n");
+    process.stdout.write("    directory: defaults to the current directory\n");
+    break;
+  }
+}
+
+function build() {
   shell.mkdir("-p", BUILD_DIR);
 
   shell.pushd(BUILD_DIR);
@@ -27,21 +53,6 @@ case "build":
 
   shell.cp(path.join(TEMPLATE_DIR, "template.js"), path.join(BUILD_DIR, "index.js"));
   shell.cp(path.join(TEMPLATE_DIR, "template.html"), path.join(BUILD_DIR, "index.html"));
-
-  break;
-
-case "init":
-  shell.exec("yes | elm init");
-  shell.exec("yes | elm install elm/json");
-  break;
-
-default:
-  process.stdout.write("Usage:\n");
-  process.stdout.write("    elm-desktop-app init [<directory>]\n");
-  process.stdout.write("    elm-desktop-app build [<directory>]\n");
-  process.stdout.write("\n");
-  process.stdout.write("Options:\n");
-  process.stdout.write("    directory: defaults to the current directory\n");
-  break;
 }
 
+main(process.argv.slice(2));
