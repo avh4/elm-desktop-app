@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "test": "./$npm_package_bin_elm_desktop_app build example && cucumber-js && elm-format --validate example src",
+    "test": "./$npm_package_bin_elm_desktop_app build example && cucumber-js && npm run-script check",
+    "check": "elm make --docs=documentation.json && elm-format --validate example src",
     "start": "./$npm_package_bin_elm_desktop_app run example"
   },
   "repository": {
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "cucumber": "^5.1.0",
+    "elm": "^0.19.0",
     "elm-format": "^0.8.1",
     "expect": "^24.8.0",
     "jasmine-expect": "^4.0.1",

@@ -74,6 +74,6 @@ view model =
 
 files : App.File Model Msg
 files =
-    App.object Model
-        |> App.field "count" .count App.int
+    App.jsonMapping Model
+        |> App.withInt "count" .count
         |> App.jsonFile "example-app.json" Loaded

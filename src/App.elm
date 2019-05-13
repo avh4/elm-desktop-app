@@ -1,33 +1,32 @@
-port module App exposing
+module App exposing
     ( program
-    , File, jsonFile
-    , Object, field, int, object, staticString
+    , File, jsonFile, JsonMapping, jsonMapping, withInt, staticString, with
     )
 
 {-|
 
 @docs program
 
-@docs File, jsonFile
+@docs File, jsonFile, JsonMapping, jsonMapping, withInt, staticString, with
 
 -}
 
 import Browser
+import DesktopApp.Ports as Ports
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Json.Decode exposing (Decoder)
 import Json.Encode as Json
 
 
-port writeOut : List ( String, String ) -> Cmd msg
+{-| Use this to define your `main` in your `Main.elm` file, and then use the `elm-desktop-app`
+command line tool to build your app.
 
+  - `init`, `update`, `subscription`, `view`: These are the same as in any Elm program.
+  - `noOp`: You must provide a msg that will do nothing (so that I can propertly wire up the electron ports).
+  - `files`: This specifies how the data for you app will be saved to the user's filesystem.
 
-port loadFile : String -> Cmd msg
-
-
-port fileLoaded : (( String, Maybe String ) -> msg) -> Sub msg
-
-
+-}
 program :
     { init : ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
@@ -45,13 +44,13 @@ program config =
                 [ cmd
                 , [ config.files ]
                     |> List.map (\f -> encodeFile f model)
-                    |> writeOut
+                    |> Ports.writeOut
                 ]
             )
 
         decoders =
             [ config.files ]
-                |> List.map (\(File filename (Object _ decode)) -> ( filename, decode ))
+                |> List.map (\(File filename (JsonMapping _ decode)) -> ( filename, decode ))
                 |> Dict.fromList
     in
     Browser.document
@@ -66,7 +65,7 @@ program config =
                     [ cmd
                     , [ config.files ]
                         |> List.map (\(File name _) -> name)
-                        |> List.map loadFile
+                        |> List.map Ports.loadFile
                         |> Cmd.batch
                     ]
                 )
@@ -99,7 +98,7 @@ program config =
             \model ->
                 Sub.batch
                     [ config.subscriptions model
-                    , fileLoaded handleLoad
+                    , Ports.fileLoaded handleLoad
                     ]
         , view =
             \model ->
@@ -111,12 +110,14 @@ program config =
         }
 
 
+{-| Represents how a given `model` can be saved to and loaded from disk.
+-}
 type File model msg
-    = File String (Object msg model)
+    = File String (JsonMapping msg model)
 
 
 encodeFile : File model msg -> model -> ( String, String )
-encodeFile (File filename (Object fields _)) model =
+encodeFile (File filename (JsonMapping fields _)) model =
     let
         json =
             Json.object
@@ -125,34 +126,63 @@ encodeFile (File filename (Object fields _)) model =
     ( filename, Json.encode 0 json )
 
 
-jsonFile : String -> (a -> msg) -> Object a a -> File a msg
-jsonFile filename toMsg (Object encode decode) =
-    File filename (Object encode (Json.Decode.map toMsg decode))
+{-| A `File` that is serialized as JSON.
+-}
+jsonFile : String -> (a -> msg) -> JsonMapping a a -> File a msg
+jsonFile filename toMsg (JsonMapping encode decode) =
+    File filename (JsonMapping encode (Json.Decode.map toMsg decode))
 
 
-type Object a b
-    = Object (List ( String, b -> Json.Value )) (Decoder a)
+{-| Represents both how to encode `b` into JSON, and decode `a` from JSON.
+
+Notably, when `a` and `b` are the same it specifies a two-way mapping to and from JSON
+(which can then be used with [`jsonFile`](#jsonFile)).
+
+-}
+type JsonMapping a b
+    = JsonMapping (List ( String, b -> Json.Value )) (Decoder a)
 
 
-object : a -> Object a b
-object a =
-    Object [] (Json.Decode.succeed a)
+{-| Creates a trivial `JsonMapping`.
+This, along with `withInt`, `staticString`, `with` make up a pipeline-style API
+which can be used like this:
+
+    import App exposing (JsonMapping, jsonMapping, withInt)
+
+    type alias MyData =
+        { total : Int
+        , count : Int
+        }
+
+    myJsonMapping : JsonMapping MyData MyData
+    myJsonMapping =
+        jsonMapping MyData
+            |> withInt "total" .total
+            |> withInt "count" .count
+
+-}
+jsonMapping : a -> JsonMapping a b
+jsonMapping a =
+    JsonMapping [] (Json.Decode.succeed a)
 
 
-type Field a
-    = Field (a -> Json.Value) (Decoder a)
+{-| Adds a field to an object. It will be represented in both your Elm model and in the JSON.
+-}
+with : String -> (x -> a) -> (a -> Json.Value) -> Decoder a -> JsonMapping (a -> b) x -> JsonMapping b x
+with name get toJson fd (JsonMapping fields decoder) =
+    JsonMapping (( name, get >> toJson ) :: fields) (Json.Decode.map2 (\a f -> f a) (Json.Decode.field name fd) decoder)
 
 
-field : String -> (x -> a) -> Field a -> Object (a -> b) x -> Object b x
-field name get (Field toJson fd) (Object fields decoder) =
-    Object (( name, get >> toJson ) :: fields) (Json.Decode.map2 (\a f -> f a) (Json.Decode.field name fd) decoder)
+{-| Adds an integer field to an object. It will be represented in both your Elm model and in the JSON.
+-}
+withInt : String -> (x -> Int) -> JsonMapping (Int -> b) x -> JsonMapping b x
+withInt name get =
+    with name get Json.int Json.Decode.int
 
 
-int : Field Int
-int =
-    Field Json.int Json.Decode.int
-
-
-staticString : String -> String -> Object a x -> Object a x
-staticString name value (Object fields decoder) =
-    Object (( name, \_ -> Json.string value ) :: fields) decoder
+{-| Adds a static string field to an object. The field will not be represented in your Elm model,
+but this exact field name and string value will be added to the written-out JSON file.
+-}
+staticString : String -> String -> JsonMapping a x -> JsonMapping a x
+staticString name value (JsonMapping fields decoder) =
+    JsonMapping (( name, \_ -> Json.string value ) :: fields) decoder

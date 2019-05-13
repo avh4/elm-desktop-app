@@ -23,11 +23,6 @@ After(function() {
 
 function initProject(world) {
   world.runElmDesktopApp(["init"]);
-
-  // hack the elm.json to use the unpublished packge in this project
-  elmJson = JSON.parse(fs.readFileSync("elm.json"));
-  elmJson['source-directories'].push("../src");
-  fs.writeFileSync("elm.json", JSON.stringify(elmJson));
 }
 
 Given('an existing app', function () {
@@ -40,7 +35,7 @@ Given('an existing app', function () {
         Inc -> (model+1, Cmd.none)\n\
         Loaded i -> (i, Cmd.none)";
   this.Main.main.view = "\\model -> Html.button [onClick Inc] [Html.text \"+\"]";
-  this.Main.main.files = "App.jsonFile \"test-app.json\" Loaded (App.object identity |> App.field \"count\" identity App.int)";
+  this.Main.main.files = "App.jsonFile \"test-app.json\" Loaded (App.jsonMapping identity |> App.withInt \"count\" identity)";
   this.Main.main.noOp = "NoOp";
   return this.writeMain();
 });
@@ -59,8 +54,8 @@ When('I run the app', function () {
 
   var Application = require('spectron').Application;
   var app = new Application({
-    path: './elm-stuff/elm-desktop-app/node_modules/.bin/electron',
-    args: ['./elm-stuff/elm-desktop-app']
+    path: './elm-stuff/elm-desktop-app/app/node_modules/.bin/electron',
+    args: ['./elm-stuff/elm-desktop-app/app']
   });
 
   this.app = app;

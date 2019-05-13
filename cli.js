@@ -2,10 +2,12 @@
 
 const shell = require("shelljs");
 const path = require("path");
+const fs = require("fs");
 
 const TEMPLATE_DIR = __dirname;
 const PROJECT_DIR = path.resolve(process.argv[3] || process.cwd());
-const BUILD_DIR = path.join(PROJECT_DIR, "elm-stuff", "elm-desktop-app");
+const GEN_DIR = path.join(PROJECT_DIR, "elm-stuff", "elm-desktop-app", "gen");
+const BUILD_DIR = path.join(PROJECT_DIR, "elm-stuff", "elm-desktop-app", "app");
 
 function main(args) {
   switch (args[0]) {
@@ -35,6 +37,7 @@ function main(args) {
 }
 
 function build() {
+  shell.mkdir("-p", GEN_DIR);
   shell.mkdir("-p", BUILD_DIR);
 
   shell.pushd(BUILD_DIR);
@@ -46,10 +49,28 @@ function build() {
   }
   shell.popd();
 
-  shell.pushd(PROJECT_DIR);
+  shell.cp("-R", path.join(TEMPLATE_DIR, "src"), path.join(GEN_DIR, "src"));
+  shell.cp(path.join(TEMPLATE_DIR, "src", "DesktopApp", "RealPorts.elm"), path.join(GEN_DIR, "src", "DesktopApp", "Ports.elm"));
+
+  const elmJson = JSON.parse(fs.readFileSync(path.join(PROJECT_DIR, "elm.json")));
+  // TODO: error if it's not an "application" project
+  elmJson['source-directories'] = elmJson['source-directories'].map(function(srcDir) {
+    return path.resolve(path.join(PROJECT_DIR, srcDir));
+  });
+  elmJson['source-directories'].push(path.join(GEN_DIR, "src"));
+  // TODO: error if it's not the latest version
+  delete elmJson['dependencies']['direct']['avh4/elm-desktop-app'];
+  fs.writeFileSync(path.join(GEN_DIR, "elm.json"), JSON.stringify(elmJson));
+
+  shell.pushd(GEN_DIR);
+  const input = path.join(PROJECT_DIR, "Main.elm");
   const output = path.join(BUILD_DIR, "elm.js");
-  shell.exec("elm make Main.elm --output " + output); // TODO: stop using shelljs to properly escape output here
+  const result = shell.exec("elm make " + input + " --output " + output); // TODO: stop using shelljs to properly escape output here
   shell.popd();
+
+  if (result.code != 0) {
+    throw "Failed to compile Elm";
+  }
 
   shell.cp(path.join(TEMPLATE_DIR, "template.js"), path.join(BUILD_DIR, "index.js"));
   shell.cp(path.join(TEMPLATE_DIR, "template.html"), path.join(BUILD_DIR, "index.html"));
