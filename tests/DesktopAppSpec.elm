@@ -3,6 +3,7 @@ module DesktopAppSpec exposing (all)
 import DesktopApp.Testable as DesktopApp
 import Expect exposing (Expectation)
 import Html
+import Html.Events exposing (onClick)
 import Test exposing (..)
 import Test.Html.Selector exposing (text)
 import TestContext
@@ -15,6 +16,7 @@ type alias TestModel =
 type TestMsg
     = NoOp
     | Loaded Int
+    | Increment
 
 
 type alias TestContext =
@@ -38,7 +40,17 @@ start =
                                 ( { model | count = newCount }
                                 , Cmd.none
                                 )
-                , view = \model -> Html.text ("count:" ++ String.fromInt model.count)
+
+                            Increment ->
+                                ( { model | count = model.count + 1 }
+                                , Cmd.none
+                                )
+                , view =
+                    \model ->
+                        Html.div []
+                            [ Html.text ("count:" ++ String.fromInt model.count)
+                            , Html.button [ onClick Increment ] [ Html.text "Increment" ]
+                            ]
                 , files =
                     DesktopApp.jsonFile "data.json"
                         identity
@@ -58,7 +70,18 @@ start =
 all : Test
 all =
     describe "DesktopApp"
-        [ test "loads persisted state" <|
+        [ test "writes state on first init" <|
+            \() ->
+                start
+                    |> simulateLoadFileNotFound "data.json"
+                    |> TestContext.expectLastEffect (Tuple.second >> Expect.equal [ DesktopApp.WriteOut ( "data.json", """{"count":0}""" ) ])
+        , test "writes stat on update" <|
+            \() ->
+                start
+                    |> simulateLoadFileNotFound "data.json"
+                    |> TestContext.clickButton "Increment"
+                    |> TestContext.expectLastEffect (Tuple.second >> Expect.equal [ DesktopApp.WriteOut ( "data.json", """{"count":1}""" ) ])
+        , test "loads persisted state when present" <|
             \() ->
                 start
                     |> simulateLoadFile "data.json" """{"count":7}"""
@@ -76,3 +99,14 @@ simulateLoadFile expectedFilename loadedContent testContext =
         |> TestContext.shouldHaveLastEffect (Tuple.second >> Expect.equal [ DesktopApp.LoadFile expectedFilename ])
         -- TODO: Avoid manually creating the msg after https://github.com/avh4/elm-program-test/issues/17 is implemented
         |> TestContext.update (Loaded 7)
+
+
+simulateLoadFileNotFound :
+    String
+    -> TestContext.TestContext TestMsg model ( cmd, List DesktopApp.Effect )
+    -> TestContext.TestContext TestMsg model ( cmd, List DesktopApp.Effect )
+simulateLoadFileNotFound expectedFilename testContext =
+    testContext
+        |> TestContext.shouldHaveLastEffect (Tuple.second >> Expect.equal [ DesktopApp.LoadFile expectedFilename ])
+        -- TODO: Avoid manually creating the msg after https://github.com/avh4/elm-program-test/issues/17 is implemented
+        |> TestContext.update NoOp
