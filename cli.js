@@ -23,6 +23,11 @@ function main(args) {
   case "init":
     shell.exec("yes | elm init");
     shell.exec("yes | elm install elm/json");
+    const elmJson = JSON.parse(fs.readFileSync(path.join(PROJECT_DIR, "elm.json")));
+    elmJson['elm-desktop-app'] = {
+      "app-id": args[2]
+    };
+    fs.writeFileSync(path.join(PROJECT_DIR, "elm.json"), JSON.stringify(elmJson));
     break;
 
   case "package":
@@ -39,7 +44,7 @@ function main(args) {
 
   default:
     process.stdout.write("Usage:\n");
-    process.stdout.write("    elm-desktop-app init [<directory>]\n");
+    process.stdout.write("    elm-desktop-app init <directory> <app-id>\n");
     process.stdout.write("    elm-desktop-app build [<directory>]\n");
     process.stdout.write("    elm-desktop-app run [<directory>]\n");
     process.stdout.write("    elm-desktop-app package [<directory>]\n");
@@ -67,6 +72,9 @@ function build() {
   shell.cp("-R", path.join(TEMPLATE_DIR, "src"), path.join(GEN_DIR, "src"));
   shell.cp(path.join(TEMPLATE_DIR, "src", "DesktopApp", "RealPorts.elm"), path.join(GEN_DIR, "src", "DesktopApp", "Ports.elm"));
 
+  // TODO: validate elm.json schema
+
+  // Update elm.json
   const elmJson = JSON.parse(fs.readFileSync(path.join(PROJECT_DIR, "elm.json")));
   // TODO: error if it's not an "application" project
   elmJson['source-directories'] = elmJson['source-directories'].map(function(srcDir) {
@@ -76,6 +84,11 @@ function build() {
   // TODO: error if it's not the latest version
   delete elmJson['dependencies']['direct']['avh4/elm-desktop-app'];
   fs.writeFileSync(path.join(GEN_DIR, "elm.json"), JSON.stringify(elmJson));
+
+  // Update package.json
+  const packageJson = JSON.parse(fs.readFileSync(path.join(BUILD_DIR, "package.json")));
+  packageJson['name'] = elmJson['elm-desktop-app']['app-id'];
+  fs.writeFileSync(path.join(BUILD_DIR, "package.json"), JSON.stringify(packageJson));
 
   shell.pushd(GEN_DIR);
   const input = path.join(PROJECT_DIR, "Main.elm");

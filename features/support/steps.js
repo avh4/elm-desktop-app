@@ -17,12 +17,16 @@ After(function() {
 
 After(function() {
   if (this.app) {
-    return this.app.stop();
+    const world = this;
+    return this.app.client.getMainProcessLogs().then(function (logs) {
+      world.attach(logs.join("\n"));
+      return world.app.stop();
+    });
   }
 });
 
 function initProject(world) {
-  world.runElmDesktopApp(["init"]);
+  world.runElmDesktopApp(["init", ".", world.appId]);
 }
 
 Given('an existing app', function () {
@@ -55,7 +59,10 @@ When('I run the app', function () {
   var Application = require('spectron').Application;
   var app = new Application({
     path: './elm-stuff/elm-desktop-app/app/node_modules/.bin/electron',
-    args: ['./elm-stuff/elm-desktop-app/app']
+    args: [
+      './elm-stuff/elm-desktop-app/app',
+      path.resolve("test-app.json")
+    ]
   });
 
   this.app = app;

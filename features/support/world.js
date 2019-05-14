@@ -5,7 +5,8 @@ const path = require("path");
 const expect = require("expect");
 
 class CustomWorld {
-  constructor() {
+  constructor({attach}) {
+    this.attach = attach;
     this.Main = {
       Msg: "type alias Msg = ()",
       main: {

@@ -1,4 +1,3 @@
-- packaged app mode: defaults to save files in user space
 - packaged app is an npm package with cli to open specific file
 - Publish Elm package
 - store data remotely (gist?)
