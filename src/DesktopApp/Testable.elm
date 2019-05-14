@@ -49,26 +49,28 @@ program config =
         saveFiles cmd (Model model) =
             -- TODO: is there a way we can check equality of the accessed fields in the JsonMapping, and avoid encoding the data to Json.Value and then to String if we don't need to?
             let
-                newFiles =
+                ( newLastSaved, writeEffects ) =
                     [ config.files ]
-                        |> List.map (\f -> encodeFile f model.appModel)
+                        |> List.foldl step ( model.lastSaved, [] )
 
-                isDirty ( filename, newContent ) =
-                    Dict.get filename model.lastSaved /= Just newContent
+                step file ( lastSaved, effects ) =
+                    let
+                        ( filename, newContent ) =
+                            encodeFile file model.appModel
+                    in
+                    if Dict.get filename lastSaved == Just newContent then
+                        -- This file hasn't changed, so do nothing
+                        ( lastSaved, effects )
 
-                dirtyFiles =
-                    newFiles
-                        |> List.filter isDirty
+                    else
+                        -- This file needs to be written out
+                        ( Dict.insert filename newContent lastSaved
+                        , WriteOut ( filename, newContent ) :: effects
+                        )
             in
-            ( Model
-                { model
-                    | lastSaved =
-                        -- TODO: this could be optimized by using a single fold to both compute the list of effect and this new dict in a single pass
-                        Dict.union (Dict.fromList dirtyFiles) model.lastSaved
-                }
+            ( Model { model | lastSaved = newLastSaved }
             , ( cmd
-              , dirtyFiles
-                    |> List.map WriteOut
+              , writeEffects
               )
             )
 
