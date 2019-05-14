@@ -10,13 +10,16 @@ import TestContext
 
 
 type alias TestModel =
-    { count : Int }
+    { count : Int
+    , uiState : Bool
+    }
 
 
 type TestMsg
     = NoOp
     | Loaded Int
     | Increment
+    | Toggle
 
 
 type alias TestContext =
@@ -28,7 +31,12 @@ start =
     let
         program =
             DesktopApp.program
-                { init = ( { count = 0 }, Cmd.none )
+                { init =
+                    ( { count = 0
+                      , uiState = False
+                      }
+                    , Cmd.none
+                    )
                 , subscriptions = \model -> Sub.none
                 , update =
                     \msg model ->
@@ -45,11 +53,18 @@ start =
                                 ( { model | count = model.count + 1 }
                                 , Cmd.none
                                 )
+
+                            Toggle ->
+                                ( { model | uiState = not model.uiState }
+                                , Cmd.none
+                                )
                 , view =
                     \model ->
                         Html.div []
                             [ Html.text ("count:" ++ String.fromInt model.count)
+                            , Html.text ("uiState:" ++ Debug.toString model.uiState)
                             , Html.button [ onClick Increment ] [ Html.text "Increment" ]
+                            , Html.button [ onClick Toggle ] [ Html.text "Toggle" ]
                             ]
                 , files =
                     DesktopApp.jsonFile "data.json"
@@ -86,6 +101,12 @@ all =
                 start
                     |> simulateLoadFile "data.json" """{"count":7}"""
                     |> TestContext.expectViewHas [ text "count:7" ]
+        , test "does not write to disk if nothing persisted has changed" <|
+            \() ->
+                start
+                    |> simulateLoadFileNotFound "data.json"
+                    |> TestContext.clickButton "Toggle"
+                    |> TestContext.expectLastEffect (Tuple.second >> Expect.equal [])
         ]
 
 

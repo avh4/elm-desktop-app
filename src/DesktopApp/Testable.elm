@@ -26,6 +26,7 @@ type Effect
 type Model yourModel
     = Model
         { appModel : yourModel
+        , lastSaved : Dict String String
         }
 
 
@@ -45,10 +46,31 @@ program :
         }
 program config =
     let
-        saveFiles model =
-            [ config.files ]
-                |> List.map (\f -> encodeFile f model)
-                |> List.map WriteOut
+        saveFiles cmd (Model model) =
+            -- TODO: is there a way we can check equality of the accessed fields in the JsonMapping, and avoid encoding the data to Json.Value and then to String if we don't need to?
+            let
+                newFiles =
+                    [ config.files ]
+                        |> List.map (\f -> encodeFile f model.appModel)
+
+                isDirty ( filename, newContent ) =
+                    Dict.get filename model.lastSaved /= Just newContent
+
+                dirtyFiles =
+                    newFiles
+                        |> List.filter isDirty
+            in
+            ( Model
+                { model
+                    | lastSaved =
+                        -- TODO: this could be optimized by using a single fold to both compute the list of effect and this new dict in a single pass
+                        Dict.union (Dict.fromList dirtyFiles) model.lastSaved
+                }
+            , ( cmd
+              , dirtyFiles
+                    |> List.map WriteOut
+              )
+            )
 
         decoders =
             [ config.files ]
@@ -63,6 +85,7 @@ program config =
             in
             ( Model
                 { appModel = model
+                , lastSaved = Dict.empty
                 }
             , ( cmd
               , [ config.files ]
@@ -76,11 +99,8 @@ program config =
                 ( newModel, cmd ) =
                     config.update msg model.appModel
             in
-            ( Model { model | appModel = newModel }
-            , ( cmd
-              , saveFiles newModel
-              )
-            )
+            Model { model | appModel = newModel }
+                |> saveFiles cmd
     , subscriptions =
         let
             handleLoad ( filename, result ) =

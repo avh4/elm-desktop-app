@@ -1,4 +1,3 @@
-- Don't write files that haven't changed
 - packaged app mode: defaults to save files in user space
 - packaged app is an npm package with cli to open specific file
 - Publish Elm package
