@@ -1,7 +1,7 @@
 port module DesktopApp.Ports exposing (fileLoaded, loadFile, writeOut)
 
 
-port writeOut : List ( String, String ) -> Cmd msg
+port writeOut : ( String, String ) -> Cmd msg
 
 
 port loadFile : String -> Cmd msg

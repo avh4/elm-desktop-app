@@ -7,7 +7,7 @@ that will connect to the electron process.
 -}
 
 
-writeOut : List ( String, String ) -> Cmd msg
+writeOut : ( String, String ) -> Cmd msg
 writeOut _ =
     Cmd.none
 

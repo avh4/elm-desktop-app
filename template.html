@@ -14,8 +14,8 @@
          var app = Elm.Main.init({
              node: document.getElementById('elm')
          });
-         app.ports.writeOut.subscribe(function(files) {
-             ipc.send('write-out', files);
+         app.ports.writeOut.subscribe(function(file) {
+             ipc.send('write-out', file);
          });
          app.ports.loadFile.subscribe(function(filename) {
              ipc.send('load-file', filename);

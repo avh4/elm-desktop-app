@@ -13,6 +13,7 @@ module DesktopApp exposing
 
 import Browser
 import DesktopApp.Ports as Ports
+import DesktopApp.Testable as DesktopApp
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Json.Decode exposing (Decoder)
@@ -38,99 +39,50 @@ program :
     -> Program () model msg
 program config =
     let
-        saveFiles ( model, cmd ) =
-            ( model
-            , Cmd.batch
-                [ cmd
-                , [ config.files ]
-                    |> List.map (\f -> encodeFile f model)
-                    |> Ports.writeOut
-                ]
-            )
+        p =
+            DesktopApp.program config
 
-        decoders =
-            [ config.files ]
-                |> List.map (\(File filename (JsonMapping _ decode)) -> ( filename, decode ))
-                |> Dict.fromList
+        performAll ( cmd, effects ) =
+            Cmd.batch
+                [ cmd
+                , effects
+                    |> List.map perform
+                    |> Cmd.batch
+                ]
+
+        perform effect =
+            case effect of
+                DesktopApp.WriteOut file ->
+                    Ports.writeOut file
+
+                DesktopApp.LoadFile filename ->
+                    Ports.loadFile filename
     in
     Browser.document
         { init =
-            \() ->
-                let
-                    ( model, cmd ) =
-                        config.init
-                in
-                ( model
-                , Cmd.batch
-                    [ cmd
-                    , [ config.files ]
-                        |> List.map (\(File name _) -> name)
-                        |> List.map Ports.loadFile
-                        |> Cmd.batch
-                    ]
-                )
+            \flags ->
+                p.init flags
+                    |> Tuple.mapSecond performAll
+        , subscriptions = p.subscriptions
         , update =
             \msg model ->
-                config.update msg model
-                    |> saveFiles
-        , subscriptions =
-            let
-                handleLoad ( filename, result ) =
-                    case result of
-                        Nothing ->
-                            config.noOp
-
-                        Just body ->
-                            case Dict.get filename decoders of
-                                Nothing ->
-                                    -- Log error?
-                                    config.noOp
-
-                                Just decoder ->
-                                    case Json.Decode.decodeString decoder body of
-                                        Err err ->
-                                            -- Log error?
-                                            config.noOp
-
-                                        Ok value ->
-                                            value
-            in
-            \model ->
-                Sub.batch
-                    [ config.subscriptions model
-                    , Ports.fileLoaded handleLoad
-                    ]
-        , view =
-            \model ->
-                { title = ""
-                , body =
-                    [ config.view model
-                    ]
-                }
+                p.update msg model
+                    |> Tuple.mapSecond performAll
+        , view = p.view
         }
 
 
 {-| Represents how a given `model` can be saved to and loaded from disk.
 -}
-type File model msg
-    = File String (JsonMapping msg model)
-
-
-encodeFile : File model msg -> model -> ( String, String )
-encodeFile (File filename (JsonMapping fields _)) model =
-    let
-        json =
-            Json.object
-                (List.map (\( k, f ) -> ( k, f model )) fields)
-    in
-    ( filename, Json.encode 0 json )
+type alias File model msg =
+    DesktopApp.File model msg
 
 
 {-| A `File` that is serialized as JSON.
 -}
 jsonFile : String -> (b -> msg) -> JsonMapping b a -> File a msg
-jsonFile filename toMsg (JsonMapping encode decode) =
-    File filename (JsonMapping encode (Json.Decode.map toMsg decode))
+jsonFile =
+    DesktopApp.jsonFile
 
 
 {-| Represents both how to encode `b` into JSON, and decode `a` from JSON.
@@ -139,8 +91,8 @@ Notably, when `a` and `b` are the same it specifies a two-way mapping to and fro
 (which can then be used with [`jsonFile`](#jsonFile)).
 
 -}
-type JsonMapping a b
-    = JsonMapping (List ( String, b -> Json.Value )) (Decoder a)
+type alias JsonMapping a b =
+    DesktopApp.JsonMapping a b
 
 
 {-| Creates a trivial `JsonMapping`.
@@ -162,27 +114,27 @@ which can be used like this:
 
 -}
 jsonMapping : a -> JsonMapping a b
-jsonMapping a =
-    JsonMapping [] (Json.Decode.succeed a)
+jsonMapping =
+    DesktopApp.jsonMapping
 
 
 {-| Adds a field to an object. It will be represented in both your Elm model and in the JSON.
 -}
 with : String -> (x -> a) -> (a -> Json.Value) -> Decoder a -> JsonMapping (a -> b) x -> JsonMapping b x
-with name get toJson fd (JsonMapping fields decoder) =
-    JsonMapping (( name, get >> toJson ) :: fields) (Json.Decode.map2 (\a f -> f a) (Json.Decode.field name fd) decoder)
+with =
+    DesktopApp.with
 
 
 {-| Adds an integer field to an object. It will be represented in both your Elm model and in the JSON.
 -}
 withInt : String -> (x -> Int) -> JsonMapping (Int -> b) x -> JsonMapping b x
-withInt name get =
-    with name get Json.int Json.Decode.int
+withInt =
+    DesktopApp.withInt
 
 
 {-| Adds a static string field to an object. The field will not be represented in your Elm model,
 but this exact field name and string value will be added to the written-out JSON file.
 -}
 staticString : String -> String -> JsonMapping a x -> JsonMapping a x
-staticString name value (JsonMapping fields decoder) =
-    JsonMapping (( name, \_ -> Json.string value ) :: fields) decoder
+staticString =
+    DesktopApp.staticString
