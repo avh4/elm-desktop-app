@@ -15,6 +15,7 @@ type alias Model =
     }
 
 
+main : Program () (App.Model Model) Msg
 main =
     App.program
         { init =

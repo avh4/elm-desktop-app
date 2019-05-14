@@ -20,7 +20,7 @@ type TestMsg
 
 
 type alias TestContext =
-    TestContext.TestContext TestMsg TestModel ( Cmd TestMsg, List DesktopApp.Effect )
+    TestContext.TestContext TestMsg (DesktopApp.Model TestModel) ( Cmd TestMsg, List DesktopApp.Effect )
 
 
 start : TestContext

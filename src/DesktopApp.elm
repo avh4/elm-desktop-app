@@ -1,11 +1,11 @@
 module DesktopApp exposing
-    ( program
+    ( program, Model
     , File, jsonFile, JsonMapping, jsonMapping, withInt, staticString, with
     )
 
 {-|
 
-@docs program
+@docs program, Model
 
 @docs File, jsonFile, JsonMapping, jsonMapping, withInt, staticString, with
 
@@ -18,6 +18,27 @@ import Dict exposing (Dict)
 import Html exposing (Html)
 import Json.Decode exposing (Decoder)
 import Json.Encode as Json
+
+
+{-| This is the Model type for your Elm program when using `DesktopApp.program`
+
+For example:
+
+    module Main exposing (main)
+
+    import DesktopApp
+
+    type alias Model = { ... }
+    type Msg = ...
+    type alias Flags = ()
+
+    main : Program Flags (DesktopApp.Model Model) Msg
+    main =
+        DesktopApp.program { ... }
+
+-}
+type alias Model yourModel =
+    DesktopApp.Model yourModel
 
 
 {-| Use this to define your `main` in your `Main.elm` file, and then use the `elm-desktop-app`
@@ -36,7 +57,7 @@ program :
     , files : File model msg
     , noOp : msg
     }
-    -> Program () model msg
+    -> Program () (Model model) msg
 program config =
     let
         p =

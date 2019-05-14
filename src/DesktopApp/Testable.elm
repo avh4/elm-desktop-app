@@ -2,6 +2,7 @@ module DesktopApp.Testable exposing
     ( Effect(..)
     , File
     , JsonMapping
+    , Model
     , jsonFile
     , jsonMapping
     , program
@@ -22,6 +23,12 @@ type Effect
     | LoadFile String
 
 
+type Model yourModel
+    = Model
+        { appModel : yourModel
+        }
+
+
 program :
     { init : ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
@@ -31,21 +38,17 @@ program :
     , noOp : msg
     }
     ->
-        { init : () -> ( model, ( Cmd msg, List Effect ) )
-        , subscriptions : model -> Sub msg
-        , update : msg -> model -> ( model, ( Cmd msg, List Effect ) )
-        , view : model -> { body : List (Html msg), title : String }
+        { init : () -> ( Model model, ( Cmd msg, List Effect ) )
+        , subscriptions : Model model -> Sub msg
+        , update : msg -> Model model -> ( Model model, ( Cmd msg, List Effect ) )
+        , view : Model model -> { body : List (Html msg), title : String }
         }
 program config =
     let
-        saveFiles ( model, cmd ) =
-            ( model
-            , ( cmd
-              , [ config.files ]
-                    |> List.map (\f -> encodeFile f model)
-                    |> List.map WriteOut
-              )
-            )
+        saveFiles model =
+            [ config.files ]
+                |> List.map (\f -> encodeFile f model)
+                |> List.map WriteOut
 
         decoders =
             [ config.files ]
@@ -58,7 +61,9 @@ program config =
                 ( model, cmd ) =
                     config.init
             in
-            ( model
+            ( Model
+                { appModel = model
+                }
             , ( cmd
               , [ config.files ]
                     |> List.map (\(File name _) -> name)
@@ -66,9 +71,16 @@ program config =
               )
             )
     , update =
-        \msg model ->
-            config.update msg model
-                |> saveFiles
+        \msg (Model model) ->
+            let
+                ( newModel, cmd ) =
+                    config.update msg model.appModel
+            in
+            ( Model { model | appModel = newModel }
+            , ( cmd
+              , saveFiles newModel
+              )
+            )
     , subscriptions =
         let
             handleLoad ( filename, result ) =
@@ -91,16 +103,16 @@ program config =
                                     Ok value ->
                                         value
         in
-        \model ->
+        \(Model model) ->
             Sub.batch
-                [ config.subscriptions model
+                [ config.subscriptions model.appModel
                 , Ports.fileLoaded handleLoad
                 ]
     , view =
-        \model ->
+        \(Model model) ->
             { title = ""
             , body =
-                [ config.view model
+                [ config.view model.appModel
                 ]
             }
     }
