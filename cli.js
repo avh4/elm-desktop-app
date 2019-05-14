@@ -87,7 +87,11 @@ function build() {
 
   // Update package.json
   const packageJson = JSON.parse(fs.readFileSync(path.join(BUILD_DIR, "package.json")));
-  packageJson['name'] = elmJson['elm-desktop-app']['app-id'];
+  const appId = elmJson['elm-desktop-app']['app-id'];
+  packageJson['name'] = appId;
+  packageJson['build'] = {
+    appId: appId
+  };
   fs.writeFileSync(path.join(BUILD_DIR, "package.json"), JSON.stringify(packageJson));
 
   shell.pushd(GEN_DIR);
