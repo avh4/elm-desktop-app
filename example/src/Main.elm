@@ -113,7 +113,7 @@ view model =
                         , type_ "checkbox"
                         ]
                         []
-                    , Html.text "Dark mode"
+                    , Html.text "Dark mode (not persisted)"
                     ]
                 ]
             ]
