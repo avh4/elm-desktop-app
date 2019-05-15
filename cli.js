@@ -17,7 +17,7 @@ function main(args) {
 
   case "run":
     build();
-    shell.exec(path.join(BUILD_DIR, "node_modules", ".bin", "electron") + " " + BUILD_DIR) // TODO: stop using shelljs to properly escape output here
+    shell.exec(path.join(BUILD_DIR, "cli.js"));
     break;
 
   case "init":
@@ -94,6 +94,7 @@ function build() {
   };
   fs.writeFileSync(path.join(BUILD_DIR, "package.json"), JSON.stringify(packageJson));
 
+  // Compile Elm code
   shell.pushd(GEN_DIR);
   const input = path.join(PROJECT_DIR, "Main.elm");
   const output = path.join(BUILD_DIR, "elm.js");
@@ -104,8 +105,10 @@ function build() {
     throw "Failed to compile Elm";
   }
 
+  // Copy nodejs files
   shell.cp(path.join(TEMPLATE_DIR, "template.js"), path.join(BUILD_DIR, "index.js"));
   shell.cp(path.join(TEMPLATE_DIR, "template.html"), path.join(BUILD_DIR, "index.html"));
+  shell.cp(path.join(TEMPLATE_DIR, "template-cli.js"), path.join(BUILD_DIR, "cli.js"));
 }
 
 main(process.argv.slice(2));
