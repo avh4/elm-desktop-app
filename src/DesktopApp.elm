@@ -1,13 +1,13 @@
 module DesktopApp exposing
     ( program, Model
-    , File, jsonFile, JsonMapping, jsonMapping, withInt, staticString, with
+    , File, jsonFile, JsonMapping, jsonMapping, withInt, withString, staticString, with
     )
 
 {-|
 
 @docs program, Model
 
-@docs File, jsonFile, JsonMapping, jsonMapping, withInt, staticString, with
+@docs File, jsonFile, JsonMapping, jsonMapping, withInt, withString, staticString, with
 
 -}
 
@@ -151,6 +151,13 @@ with =
 withInt : String -> (x -> Int) -> JsonMapping (Int -> b) x -> JsonMapping b x
 withInt =
     DesktopApp.withInt
+
+
+{-| Adds an string field to an object. It will be represented in both your Elm model and in the JSON.
+-}
+withString : String -> (x -> String) -> JsonMapping (String -> b) x -> JsonMapping b x
+withString =
+    DesktopApp.withString
 
 
 {-| Adds a static string field to an object. The field will not be represented in your Elm model,

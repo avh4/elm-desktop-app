@@ -9,6 +9,7 @@ module DesktopApp.Testable exposing
     , staticString
     , with
     , withInt
+    , withString
     )
 
 import DesktopApp.Ports as Ports
@@ -163,6 +164,11 @@ with name get toJson fd (JsonMapping fields decoder) =
 withInt : String -> (x -> Int) -> JsonMapping (Int -> b) x -> JsonMapping b x
 withInt name get =
     with name get Json.int Json.Decode.int
+
+
+withString : String -> (x -> String) -> JsonMapping (String -> b) x -> JsonMapping b x
+withString name get =
+    with name get Json.string Json.Decode.string
 
 
 staticString : String -> String -> JsonMapping a x -> JsonMapping a x

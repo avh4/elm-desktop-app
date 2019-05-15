@@ -3,14 +3,15 @@ module Main exposing (main)
 import BeautifulExample
 import DesktopApp as App
 import Html exposing (Html)
-import Html.Attributes exposing (disabled, style)
-import Html.Events exposing (onClick)
+import Html.Attributes exposing (disabled, placeholder, style, value)
+import Html.Events exposing (onClick, onInput)
 import Json.Encode as Json
 import Time
 
 
 type alias Model =
-    { count : Int
+    { name : String
+    , count : Int
     , cooldown : Int
     }
 
@@ -19,7 +20,8 @@ main : Program () (App.Model Model) Msg
 main =
     App.program
         { init =
-            ( { count = 0
+            ( { name = ""
+              , count = 0
               , cooldown = 0
               }
             , Cmd.none
@@ -42,9 +44,10 @@ main =
 
 type Msg
     = NoOp
-    | Loaded Int
+    | Loaded String Int
     | Increment
     | Decrement
+    | NameChange String
     | Tick
 
 
@@ -54,8 +57,11 @@ update msg model =
         NoOp ->
             model
 
-        Loaded newCount ->
-            { model | count = newCount }
+        Loaded newName newCount ->
+            { model
+                | name = newName
+                , count = newCount
+            }
 
         Increment ->
             { model
@@ -68,6 +74,9 @@ update msg model =
                 | count = model.count - 1
                 , cooldown = 3
             }
+
+        NameChange newName ->
+            { model | name = newName }
 
         Tick ->
             { model | cooldown = model.cooldown - 1 }
@@ -85,7 +94,15 @@ view model =
         }
     <|
         Html.div []
-            [ Html.button
+            [ Html.div []
+                [ Html.input
+                    [ onInput NameChange
+                    , value model.name
+                    , placeholder "Your name"
+                    ]
+                    []
+                ]
+            , Html.button
                 [ onClick Decrement
                 , disabled (model.cooldown > 0)
                 ]
@@ -110,5 +127,6 @@ view model =
 files : App.File Model Msg
 files =
     App.jsonMapping Loaded
+        |> App.withString "name" .name
         |> App.withInt "count" .count
         |> App.jsonFile identity
