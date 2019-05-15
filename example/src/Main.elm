@@ -2,12 +2,24 @@ module Main exposing (main)
 
 import BeautifulExample
 import Color
-import DesktopApp as App
+import DesktopApp
 import Html exposing (Html)
 import Html.Attributes exposing (placeholder, style, type_, value)
 import Html.Events exposing (onCheck, onClick, onInput)
 import Json.Encode as Json
 import Time
+
+
+main : Program () (DesktopApp.Model Model) Msg
+main =
+    DesktopApp.program
+        { init = ( init, Cmd.none )
+        , update = \msg model -> ( update msg model, Cmd.none )
+        , subscriptions = \model -> Sub.none
+        , view = view
+        , files = files
+        , noOp = NoOp
+        }
 
 
 type alias Model =
@@ -17,22 +29,12 @@ type alias Model =
     }
 
 
-main : Program () (App.Model Model) Msg
-main =
-    App.program
-        { init =
-            ( { name = ""
-              , count = 0
-              , darkMode = False
-              }
-            , Cmd.none
-            )
-        , update = \msg model -> ( update msg model, Cmd.none )
-        , subscriptions = \model -> Sub.none
-        , view = view
-        , files = files
-        , noOp = NoOp
-        }
+init : Model
+init =
+    { name = ""
+    , count = 0
+    , darkMode = False
+    }
 
 
 type Msg
@@ -117,9 +119,9 @@ view model =
             ]
 
 
-files : App.File Model Msg
+files : DesktopApp.File Model Msg
 files =
-    App.jsonMapping Loaded
-        |> App.withString "name" .name
-        |> App.withInt "count" .count
-        |> App.jsonFile identity
+    DesktopApp.jsonMapping Loaded
+        |> DesktopApp.withString "name" .name
+        |> DesktopApp.withInt "count" .count
+        |> DesktopApp.jsonFile identity

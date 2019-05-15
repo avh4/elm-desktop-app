@@ -1,20 +1,15 @@
 module Main exposing (main)
 
-import DesktopApp as App
+import DesktopApp
 import Html exposing (Html)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import Json.Encode as Json
 
 
-type alias Model =
-    { count : Int
-    }
-
-
-main : Program () (App.Model Model) Msg
+main : Program () (DesktopApp.Model Model) Msg
 main =
-    App.program
+    DesktopApp.program
         { init = ( init, Cmd.none )
         , update = \msg model -> ( update msg model, Cmd.none )
         , subscriptions = \model -> Sub.none
@@ -22,6 +17,11 @@ main =
         , files = files
         , noOp = NoOp
         }
+
+
+type alias Model =
+    { count : Int
+    }
 
 
 init : Model
@@ -62,8 +62,8 @@ view model =
         ]
 
 
-files : App.File Model Msg
+files : DesktopApp.File Model Msg
 files =
-    App.jsonMapping Loaded
-        |> App.withInt "count" .count
-        |> App.jsonFile identity
+    DesktopApp.jsonMapping Loaded
+        |> DesktopApp.withInt "count" .count
+        |> DesktopApp.jsonFile identity
