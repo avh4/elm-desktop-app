@@ -1,4 +1,6 @@
 - Publish Elm package
+  - Split JSON mapping to separate module
+  - Should we wrap Msg?
 - init requires an app-id (with wizard input?)
 - store data remotely (gist?)
 - packaged app has menu for opening alt file locations
