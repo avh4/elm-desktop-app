@@ -1,10 +1,11 @@
 module Main exposing (main)
 
 import BeautifulExample
+import Color
 import DesktopApp as App
 import Html exposing (Html)
-import Html.Attributes exposing (disabled, placeholder, style, value)
-import Html.Events exposing (onClick, onInput)
+import Html.Attributes exposing (disabled, placeholder, style, type_, value)
+import Html.Events exposing (onCheck, onClick, onInput)
 import Json.Encode as Json
 import Time
 
@@ -13,6 +14,7 @@ type alias Model =
     { name : String
     , count : Int
     , cooldown : Int
+    , darkMode : Bool
     }
 
 
@@ -23,6 +25,7 @@ main =
             ( { name = ""
               , count = 0
               , cooldown = 0
+              , darkMode = False
               }
             , Cmd.none
             )
@@ -47,7 +50,8 @@ type Msg
     | Loaded String Int
     | Increment
     | Decrement
-    | NameChange String
+    | NameChanged String
+    | DarkModeChanged Bool
     | Tick
 
 
@@ -75,8 +79,11 @@ update msg model =
                 , cooldown = 3
             }
 
-        NameChange newName ->
+        NameChanged newName ->
             { model | name = newName }
+
+        DarkModeChanged newDarkMode ->
+            { model | darkMode = newDarkMode }
 
         Tick ->
             { model | cooldown = model.cooldown - 1 }
@@ -87,7 +94,12 @@ view model =
     BeautifulExample.view
         { title = "iCount"
         , details = Nothing
-        , color = Nothing
+        , color =
+            if model.darkMode then
+                Just Color.black
+
+            else
+                Nothing
         , maxWidth = 600
         , githubUrl = Nothing
         , documentationUrl = Nothing
@@ -96,7 +108,7 @@ view model =
         Html.div []
             [ Html.div []
                 [ Html.input
-                    [ onInput NameChange
+                    [ onInput NameChanged
                     , value model.name
                     , placeholder "Your name"
                     ]
@@ -121,6 +133,16 @@ view model =
 
               else
                 Html.text ""
+            , Html.div []
+                [ Html.label []
+                    [ Html.input
+                        [ onCheck DarkModeChanged
+                        , type_ "checkbox"
+                        ]
+                        []
+                    , Html.text "Dark mode"
+                    ]
+                ]
             ]
 
 
