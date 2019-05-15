@@ -30,6 +30,8 @@ function main(args) {
       "app-id": args[2]
     };
     fs.writeFileSync(path.join(PROJECT_DIR, "elm.json"), JSON.stringify(elmJson, null, 4));
+
+    shell.cp(path.join(TEMPLATE_DIR, "src", "Main.elm"), path.join(PROJECT_DIR, "src", "Main.elm"));
     break;
 
   case "package":
@@ -98,7 +100,7 @@ function build() {
 
   // Compile Elm code
   shell.pushd(GEN_DIR);
-  const input = path.join(PROJECT_DIR, "Main.elm");
+  const input = path.join(PROJECT_DIR, "src", "Main.elm");
   const output = path.join(BUILD_DIR, "elm.js");
   const result = shell.exec("elm make " + input + " --output " + output); // TODO: stop using shelljs to properly escape output here
   shell.popd();
