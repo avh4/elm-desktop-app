@@ -53,7 +53,7 @@ When('I make change my program\'s files to', function (docString) {
   return this.writeMain();
 });
 
-When('I run the app', function () {
+When('I run the app with {string}', function (dataFilename) {
   this.runElmDesktopApp(["build"]);
 
   var Application = require('spectron').Application;
@@ -61,7 +61,7 @@ When('I run the app', function () {
     path: './elm-stuff/elm-desktop-app/app/node_modules/.bin/electron',
     args: [
       './elm-stuff/elm-desktop-app/app',
-      path.resolve("test-app.json")
+      dataFilename
     ]
   });
 

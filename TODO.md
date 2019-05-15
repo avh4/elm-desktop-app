@@ -1,4 +1,3 @@
-- packaged app is an npm package with cli to open specific file
 - Publish Elm package
 - store data remotely (gist?)
 - packaged app has menu for opening alt file locations

@@ -3,7 +3,8 @@
 const electron = require('electron');
 const proc = require('child_process');
 
-const child = proc.spawn(electron, [__dirname], {stdio: 'inherit'})
+const args = [__dirname].concat(process.argv.slice(2));
+const child = proc.spawn(electron, args, {stdio: 'inherit'})
 child.on('close', function (code) {
   process.exit(code);
 });

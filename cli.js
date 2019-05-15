@@ -17,7 +17,8 @@ function main(args) {
 
   case "run":
     build();
-    shell.exec(path.join(BUILD_DIR, "cli.js"));
+    const runArgs = [path.join(BUILD_DIR, "cli.js")].concat(process.argv.slice(4)) ;
+    shell.exec(runArgs.join(" ")); // TODO: stop using shelljs to properly escape output here
     break;
 
   case "init":
