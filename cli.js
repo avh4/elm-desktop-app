@@ -28,7 +28,7 @@ function main(args) {
     elmJson['elm-desktop-app'] = {
       "app-id": args[2]
     };
-    fs.writeFileSync(path.join(PROJECT_DIR, "elm.json"), JSON.stringify(elmJson));
+    fs.writeFileSync(path.join(PROJECT_DIR, "elm.json"), JSON.stringify(elmJson, null, 4));
     break;
 
   case "package":
