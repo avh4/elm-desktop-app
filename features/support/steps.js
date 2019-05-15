@@ -8,7 +8,7 @@ Before(function() {
   shell.rm("-Rf", "_test");
   shell.mkdir("-p", "_test");
   shell.cd("_test");
-  shell.exec("npm install ../");
+  this.exec("npm install ../");
 });
 
 After(function() {

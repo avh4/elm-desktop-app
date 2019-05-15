@@ -20,9 +20,16 @@ class CustomWorld {
     };
   }
 
-  runElmDesktopApp(args) {
-    const result = shell.exec(path.join(__dirname, "..", "..", "cli.js") + " " + args.join(" ")); // TODO: properly escape this
+  exec(string) {
+    const result = shell.exec(string, {silent: true});
+    this.attach(string);
+    this.attach(result.stdout);
+    this.attach(result.stderr);
     expect(result.code).toEqual(0);
+  }
+
+  runElmDesktopApp(args) {
+    this.exec(path.join(__dirname, "..", "..", "cli.js") + " " + args.join(" ")); // TODO: properly escape this
   }
 
   writeMain() {
