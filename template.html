@@ -14,15 +14,15 @@
          var app = Elm.Main.init({
              node: document.getElementById('elm')
          });
-         app.ports.writeOut.subscribe(function(file) {
-             ipc.send('write-out', file);
+         app.ports.writeUserData.subscribe(function(content) {
+             ipc.send('write-user-data', content);
          });
-         app.ports.loadFile.subscribe(function(filename) {
-             ipc.send('load-file', filename);
+         app.ports.loadUserData.subscribe(function(unit) {
+             ipc.send('load-user-data', unit);
          });
 
-         ipc.on('file-loaded', function(event, data) {
-             app.ports.fileLoaded.send(data);
+         ipc.on('user-data-loaded', function(event, content) {
+             app.ports.userDataLoaded.send(content);
          });
         </script>
     </body>

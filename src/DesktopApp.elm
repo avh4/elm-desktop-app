@@ -73,11 +73,11 @@ program config =
 
         perform effect =
             case effect of
-                DesktopApp.WriteOut file ->
-                    Ports.writeOut file
+                DesktopApp.WriteUserData content ->
+                    Ports.writeUserData content
 
-                DesktopApp.LoadFile filename ->
-                    Ports.loadFile filename
+                DesktopApp.LoadUserData ->
+                    Ports.loadUserData ()
     in
     Browser.document
         { init =
@@ -101,7 +101,7 @@ type alias File model msg =
 
 {-| A `File` that is serialized as JSON.
 -}
-jsonFile : String -> (b -> msg) -> JsonMapping b a -> File a msg
+jsonFile : (b -> msg) -> JsonMapping b a -> File a msg
 jsonFile =
     DesktopApp.jsonFile
 

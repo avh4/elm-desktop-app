@@ -19,14 +19,14 @@ import Json.Encode as Json
 
 
 type Effect
-    = WriteOut ( String, String )
-    | LoadFile String
+    = WriteUserData String
+    | LoadUserData
 
 
 type Model yourModel
     = Model
         { appModel : yourModel
-        , lastSaved : Dict String String
+        , lastSaved : Maybe String
         }
 
 
@@ -50,22 +50,18 @@ program config =
             -- TODO: is there a way we can check equality of the accessed fields in the JsonMapping, and avoid encoding the data to Json.Value and then to String if we don't need to?
             let
                 ( newLastSaved, writeEffects ) =
-                    [ config.files ]
-                        |> List.foldl step ( model.lastSaved, [] )
-
-                step file ( lastSaved, effects ) =
                     let
-                        ( filename, newContent ) =
-                            encodeFile file model.appModel
+                        newContent =
+                            encodeFile config.files model.appModel
                     in
-                    if Dict.get filename lastSaved == Just newContent then
+                    if model.lastSaved == Just newContent then
                         -- This file hasn't changed, so do nothing
-                        ( lastSaved, effects )
+                        ( model.lastSaved, [] )
 
                     else
                         -- This file needs to be written out
-                        ( Dict.insert filename newContent lastSaved
-                        , WriteOut ( filename, newContent ) :: effects
+                        ( Just newContent
+                        , [ WriteUserData newContent ]
                         )
             in
             ( Model { model | lastSaved = newLastSaved }
@@ -74,10 +70,9 @@ program config =
               )
             )
 
-        decoders =
-            [ config.files ]
-                |> List.map (\(File filename (JsonMapping _ decode)) -> ( filename, decode ))
-                |> Dict.fromList
+        decoder =
+            config.files
+                |> (\(File (JsonMapping _ decode)) -> decode)
     in
     { init =
         \() ->
@@ -87,12 +82,10 @@ program config =
             in
             ( Model
                 { appModel = model
-                , lastSaved = Dict.empty
+                , lastSaved = Nothing
                 }
             , ( cmd
-              , [ config.files ]
-                    |> List.map (\(File name _) -> name)
-                    |> List.map LoadFile
+              , [ LoadUserData ]
               )
             )
     , update =
@@ -105,30 +98,24 @@ program config =
                 |> saveFiles cmd
     , subscriptions =
         let
-            handleLoad ( filename, result ) =
+            handleLoad result =
                 case result of
                     Nothing ->
                         config.noOp
 
                     Just body ->
-                        case Dict.get filename decoders of
-                            Nothing ->
+                        case Json.Decode.decodeString decoder body of
+                            Err err ->
                                 -- Log error?
                                 config.noOp
 
-                            Just decoder ->
-                                case Json.Decode.decodeString decoder body of
-                                    Err err ->
-                                        -- Log error?
-                                        config.noOp
-
-                                    Ok value ->
-                                        value
+                            Ok value ->
+                                value
         in
         \(Model model) ->
             Sub.batch
                 [ config.subscriptions model.appModel
-                , Ports.fileLoaded handleLoad
+                , Ports.userDataLoaded handleLoad
                 ]
     , view =
         \(Model model) ->
@@ -141,22 +128,22 @@ program config =
 
 
 type File model msg
-    = File String (JsonMapping msg model)
+    = File (JsonMapping msg model)
 
 
-encodeFile : File model msg -> model -> ( String, String )
-encodeFile (File filename (JsonMapping fields _)) model =
+encodeFile : File model msg -> model -> String
+encodeFile (File (JsonMapping fields _)) model =
     let
         json =
             Json.object
                 (List.map (\( k, f ) -> ( k, f model )) fields)
     in
-    ( filename, Json.encode 0 json )
+    Json.encode 0 json
 
 
-jsonFile : String -> (b -> msg) -> JsonMapping b a -> File a msg
-jsonFile filename toMsg (JsonMapping encode decode) =
-    File filename (JsonMapping encode (Json.Decode.map toMsg decode))
+jsonFile : (b -> msg) -> JsonMapping b a -> File a msg
+jsonFile toMsg (JsonMapping encode decode) =
+    File (JsonMapping encode (Json.Decode.map toMsg decode))
 
 
 type JsonMapping a b

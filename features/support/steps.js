@@ -39,7 +39,7 @@ Given('an existing app', function () {
         Inc -> (model+1, Cmd.none)\n\
         Loaded i -> (i, Cmd.none)";
   this.Main.main.view = "\\model -> Html.button [onClick Inc] [Html.text \"+\"]";
-  this.Main.main.files = "App.jsonFile \"test-app.json\" Loaded (App.jsonMapping identity |> App.withInt \"count\" identity)";
+  this.Main.main.files = "App.jsonFile Loaded (App.jsonMapping identity |> App.withInt \"count\" identity)";
   this.Main.main.noOp = "NoOp";
   return this.writeMain();
 });

@@ -67,8 +67,7 @@ start =
                             , Html.button [ onClick Toggle ] [ Html.text "Toggle" ]
                             ]
                 , files =
-                    DesktopApp.jsonFile "data.json"
-                        identity
+                    DesktopApp.jsonFile identity
                         (DesktopApp.jsonMapping Loaded
                             |> DesktopApp.withInt "count" .count
                         )
@@ -88,46 +87,44 @@ all =
         [ test "writes state on first init" <|
             \() ->
                 start
-                    |> simulateLoadFileNotFound "data.json"
-                    |> TestContext.expectLastEffect (Tuple.second >> Expect.equal [ DesktopApp.WriteOut ( "data.json", """{"count":0}""" ) ])
+                    |> simulateUserDataNotFound
+                    |> TestContext.expectLastEffect (Tuple.second >> Expect.equal [ DesktopApp.WriteUserData """{"count":0}""" ])
         , test "writes stat on update" <|
             \() ->
                 start
-                    |> simulateLoadFileNotFound "data.json"
+                    |> simulateUserDataNotFound
                     |> TestContext.clickButton "Increment"
-                    |> TestContext.expectLastEffect (Tuple.second >> Expect.equal [ DesktopApp.WriteOut ( "data.json", """{"count":1}""" ) ])
+                    |> TestContext.expectLastEffect (Tuple.second >> Expect.equal [ DesktopApp.WriteUserData """{"count":1}""" ])
         , test "loads persisted state when present" <|
             \() ->
                 start
-                    |> simulateLoadFile "data.json" """{"count":7}"""
+                    |> simulateLoadUserData """{"count":7}"""
                     |> TestContext.expectViewHas [ text "count:7" ]
         , test "does not write to disk if nothing persisted has changed" <|
             \() ->
                 start
-                    |> simulateLoadFileNotFound "data.json"
+                    |> simulateUserDataNotFound
                     |> TestContext.clickButton "Toggle"
                     |> TestContext.expectLastEffect (Tuple.second >> Expect.equal [])
         ]
 
 
-simulateLoadFile :
+simulateLoadUserData :
     String
-    -> String
     -> TestContext.TestContext TestMsg model ( cmd, List DesktopApp.Effect )
     -> TestContext.TestContext TestMsg model ( cmd, List DesktopApp.Effect )
-simulateLoadFile expectedFilename loadedContent testContext =
+simulateLoadUserData loadedContent testContext =
     testContext
-        |> TestContext.shouldHaveLastEffect (Tuple.second >> Expect.equal [ DesktopApp.LoadFile expectedFilename ])
+        |> TestContext.shouldHaveLastEffect (Tuple.second >> Expect.equal [ DesktopApp.LoadUserData ])
         -- TODO: Avoid manually creating the msg after https://github.com/avh4/elm-program-test/issues/17 is implemented
         |> TestContext.update (Loaded 7)
 
 
-simulateLoadFileNotFound :
-    String
+simulateUserDataNotFound :
+    TestContext.TestContext TestMsg model ( cmd, List DesktopApp.Effect )
     -> TestContext.TestContext TestMsg model ( cmd, List DesktopApp.Effect )
-    -> TestContext.TestContext TestMsg model ( cmd, List DesktopApp.Effect )
-simulateLoadFileNotFound expectedFilename testContext =
+simulateUserDataNotFound testContext =
     testContext
-        |> TestContext.shouldHaveLastEffect (Tuple.second >> Expect.equal [ DesktopApp.LoadFile expectedFilename ])
+        |> TestContext.shouldHaveLastEffect (Tuple.second >> Expect.equal [ DesktopApp.LoadUserData ])
         -- TODO: Avoid manually creating the msg after https://github.com/avh4/elm-program-test/issues/17 is implemented
         |> TestContext.update NoOp

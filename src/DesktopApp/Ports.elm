@@ -1,4 +1,4 @@
-module DesktopApp.Ports exposing (fileLoaded, loadFile, writeOut)
+module DesktopApp.Ports exposing (loadUserData, userDataLoaded, writeUserData)
 
 {-| This module is used when publishing the elm-desktop-app -- theses "ports" do
 nothing when used in the browser.
@@ -7,16 +7,16 @@ that will connect to the electron process.
 -}
 
 
-writeOut : ( String, String ) -> Cmd msg
-writeOut _ =
+writeUserData : String -> Cmd msg
+writeUserData _ =
     Cmd.none
 
 
-loadFile : String -> Cmd msg
-loadFile _ =
+loadUserData : () -> Cmd msg
+loadUserData () =
     Cmd.none
 
 
-fileLoaded : (( String, Maybe String ) -> msg) -> Sub msg
-fileLoaded _ =
+userDataLoaded : (Maybe String -> msg) -> Sub msg
+userDataLoaded _ =
     Sub.none

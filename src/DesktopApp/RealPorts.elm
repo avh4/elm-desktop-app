@@ -1,10 +1,10 @@
-port module DesktopApp.Ports exposing (fileLoaded, loadFile, writeOut)
+port module DesktopApp.Ports exposing (loadUserData, userDataLoaded, writeUserData)
 
 
-port writeOut : ( String, String ) -> Cmd msg
+port writeUserData : String -> Cmd msg
 
 
-port loadFile : String -> Cmd msg
+port loadUserData : () -> Cmd msg
 
 
-port fileLoaded : (( String, Maybe String ) -> msg) -> Sub msg
+port userDataLoaded : (Maybe String -> msg) -> Sub msg

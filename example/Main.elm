@@ -111,4 +111,4 @@ files : App.File Model Msg
 files =
     App.jsonMapping Loaded
         |> App.withInt "count" .count
-        |> App.jsonFile "example-app.json" identity
+        |> App.jsonFile identity

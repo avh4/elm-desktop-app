@@ -17,25 +17,24 @@ function createWindow () {
 const userData = process.argv[2] ? path.dirname(path.resolve(process.argv[2])) : app.getPath("userData");
 console.log("userData", userData);
 
-ipc.on('write-out', function (event, file) {
-  const filename = path.join(userData, file[0]);
-  const content = file[1];
+ipc.on('write-user-data', function (event, content) {
+  const filename = path.join(userData, 'user-data.json');
   console.log(`Writing ${filename}: ${content.length} characters`);
   fs.writeFile(filename, content, 'utf-8', function(err) {
   });
 });
 
-ipc.on('load-file', function(event, filename) {
-  const filepath = path.join(userData, filename);
+ipc.on('load-user-data', function(event, _unit) {
+  const filepath = path.join(userData, 'user-data.json');
   fs.readFile(filepath, 'utf-8', (err, content) => {
     if (err) {
       if (err.code === 'ENOENT') {
-        event.reply('file-loaded', [filename, null]);
+        event.reply('user-data-loaded', null);
       } else {
         throw err;
       }
     } else {
-      event.reply('file-loaded', [filename, content]);
+      event.reply('user-data-loaded', content);
     }
   });
 });
