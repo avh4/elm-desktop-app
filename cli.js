@@ -4,7 +4,8 @@ const shell = require("shelljs");
 const path = require("path");
 const fs = require("fs");
 
-const TEMPLATE_DIR = __dirname;
+const DESKTOP_APP_DIR = __dirname;
+const TEMPLATE_DIR = path.join(DESKTOP_APP_DIR, "template");
 const PROJECT_DIR = path.resolve(process.argv[3] || process.cwd());
 const GEN_DIR = path.join(PROJECT_DIR, "elm-stuff", "elm-desktop-app", "gen");
 const BUILD_DIR = path.join(PROJECT_DIR, "elm-stuff", "elm-desktop-app", "app");
@@ -70,8 +71,8 @@ function build() {
   shell.popd();
 
   shell.rm("-Rf", path.join(GEN_DIR, "src"));
-  shell.cp("-R", path.join(TEMPLATE_DIR, "src"), path.join(GEN_DIR, "src"));
-  shell.cp(path.join(TEMPLATE_DIR, "src", "DesktopApp", "RealPorts.elm"), path.join(GEN_DIR, "src", "DesktopApp", "Ports.elm"));
+  shell.cp("-R", path.join(DESKTOP_APP_DIR, "src"), path.join(GEN_DIR, "src"));
+  shell.cp(path.join(DESKTOP_APP_DIR, "src", "DesktopApp", "RealPorts.elm"), path.join(GEN_DIR, "src", "DesktopApp", "Ports.elm"));
 
   // TODO: validate elm.json schema
 
@@ -107,9 +108,9 @@ function build() {
   }
 
   // Copy nodejs files
-  shell.cp(path.join(TEMPLATE_DIR, "template.js"), path.join(BUILD_DIR, "index.js"));
-  shell.cp(path.join(TEMPLATE_DIR, "template.html"), path.join(BUILD_DIR, "index.html"));
-  shell.cp(path.join(TEMPLATE_DIR, "template-cli.js"), path.join(BUILD_DIR, "cli.js"));
+  shell.cp(path.join(TEMPLATE_DIR, "index.js"), path.join(BUILD_DIR, "index.js"));
+  shell.cp(path.join(TEMPLATE_DIR, "index.html"), path.join(BUILD_DIR, "index.html"));
+  shell.cp(path.join(TEMPLATE_DIR, "cli.js"), path.join(BUILD_DIR, "cli.js"));
 }
 
 main(process.argv.slice(2));
