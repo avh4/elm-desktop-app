@@ -1,7 +1,7 @@
 {
     "type": "package",
     "name": "avh4/elm-desktop-app",
-    "summary": ".",
+    "summary": "the simplest way to write desktop applications in Elm",
     "license": "MIT",
     "version": "1.0.0",
     "exposed-modules": [
