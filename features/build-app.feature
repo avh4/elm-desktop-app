@@ -1,5 +1,10 @@
 Feature: Building an Elm electron app
 
+Scenario: the init app compiles
+  When I create a new app
+  Then I can successfully build my app
+
+
 Scenario: simple app that writes data files
   When I create a new app
   And I make change my program's files to
@@ -11,6 +16,7 @@ Scenario: simple app that writes data files
     """
     {"key":"value"}
     """
+
 
 Scenario: app modifies existing data
   Given an existing app

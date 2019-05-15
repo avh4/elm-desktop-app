@@ -70,6 +70,10 @@ When('I run the app with {string}', function (dataFilename) {
   return app.start();
 });
 
+Then('I can successfully build my app', function () {
+  this.runElmDesktopApp(["build"]);
+});
+
 When('click {string}', function (label) {
   this.app.client.waitUntilTextExists("body", label);
   return this.app.client.element("button").click(); // TODO: find the exact button
