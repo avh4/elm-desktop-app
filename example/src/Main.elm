@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import BeautifulExample
+import Browser
 import Color
 import DesktopApp
 import Html exposing (Html)
@@ -71,52 +72,61 @@ update msg model =
             { model | darkMode = newDarkMode }
 
 
-view : Model -> Html Msg
+view : Model -> Browser.Document Msg
 view model =
-    BeautifulExample.view
-        { title = "iCount"
-        , details = Nothing
-        , color =
-            if model.darkMode then
-                Just Color.black
+    { title =
+        if String.isEmpty (String.trim model.name) then
+            "iCount"
 
-            else
-                Nothing
-        , maxWidth = 600
-        , githubUrl = Nothing
-        , documentationUrl = Nothing
-        }
-    <|
-        Html.div []
-            [ Html.div []
-                [ Html.input
-                    [ onInput NameChanged
-                    , value model.name
-                    , placeholder "Your name"
-                    ]
-                    []
-                ]
-            , Html.button
-                [ onClick Decrement ]
-                [ Html.text "-" ]
-            , Html.span
-                [ style "padding" "0 20px" ]
-                [ Html.text (String.fromInt model.count)
-                ]
-            , Html.button
-                [ onClick Increment ]
-                [ Html.text "+" ]
-            , Html.div []
-                [ Html.label []
+        else
+            String.trim model.name ++ "'s iCount"
+    , body =
+        [ BeautifulExample.view
+            { title = "iCount"
+            , details = Nothing
+            , color =
+                if model.darkMode then
+                    Just Color.black
+
+                else
+                    Nothing
+            , maxWidth = 600
+            , githubUrl = Nothing
+            , documentationUrl = Nothing
+            }
+          <|
+            Html.div []
+                [ Html.div []
                     [ Html.input
-                        [ onCheck DarkModeChanged
-                        , type_ "checkbox"
+                        [ onInput NameChanged
+                        , value model.name
+                        , placeholder "Your name"
                         ]
                         []
-                    , Html.text "Dark mode (not persisted)"
+                    ]
+                , Html.button
+                    [ onClick Decrement ]
+                    [ Html.text "-" ]
+                , Html.span
+                    [ style "padding" "0 20px" ]
+                    [ Html.text (String.fromInt model.count)
+                    ]
+                , Html.button
+                    [ onClick Increment ]
+                    [ Html.text "+" ]
+                , Html.div []
+                    [ Html.label []
+                        [ Html.input
+                            [ onCheck DarkModeChanged
+                            , type_ "checkbox"
+                            ]
+                            []
+                        , Html.text "Dark mode (not persisted)"
+                        ]
                     ]
                 ]
-            ]
+        ]
+    }
 
 
 files : DesktopApp.File Model Msg

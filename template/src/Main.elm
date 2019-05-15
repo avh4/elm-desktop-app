@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Browser
 import DesktopApp
 import Html exposing (Html)
 import Html.Attributes exposing (style)
@@ -49,9 +50,10 @@ update msg model =
             { model | count = model.count + 1 }
 
 
-view : Model -> Html Msg
+view : Model -> Browser.Document Msg
 view model =
-    Html.div []
+    { title = ""
+    , body =
         [ Html.span
             [ style "padding" "0 20px" ]
             [ Html.text (String.fromInt model.count)
@@ -60,6 +62,7 @@ view model =
             [ onClick Increment ]
             [ Html.text "+" ]
         ]
+    }
 
 
 files : DesktopApp.File Model Msg

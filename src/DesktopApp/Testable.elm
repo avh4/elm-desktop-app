@@ -12,6 +12,7 @@ module DesktopApp.Testable exposing
     , withString
     )
 
+import Browser
 import DesktopApp.Ports as Ports
 import Dict exposing (Dict)
 import Html exposing (Html)
@@ -35,7 +36,7 @@ program :
     { init : ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
-    , view : model -> Html msg
+    , view : model -> Browser.Document msg
     , files : File model msg
     , noOp : msg
     }
@@ -43,7 +44,7 @@ program :
         { init : () -> ( Model model, ( Cmd msg, List Effect ) )
         , subscriptions : Model model -> Sub msg
         , update : msg -> Model model -> ( Model model, ( Cmd msg, List Effect ) )
-        , view : Model model -> { body : List (Html msg), title : String }
+        , view : Model model -> Browser.Document msg
         }
 program config =
     let
@@ -120,11 +121,7 @@ program config =
                 ]
     , view =
         \(Model model) ->
-            { title = ""
-            , body =
-                [ config.view model.appModel
-                ]
-            }
+            config.view model.appModel
     }
 
 

@@ -13,7 +13,7 @@ class CustomWorld {
         init: "((), Cmd.none)",
         update: "\\_ model -> (model, Cmd.none)",
         subscriptions: "\\_ -> Sub.none",
-        view: "\\model -> Html.text (Debug.toString model)",
+        view: "\\model -> { title = \"\", body = [ Html.text (Debug.toString model) ] }",
         files: "Debug.todo \"\"",
         noOp: "()"
       }

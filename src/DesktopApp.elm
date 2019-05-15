@@ -53,7 +53,7 @@ program :
     { init : ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
-    , view : model -> Html msg
+    , view : model -> Browser.Document msg
     , files : File model msg
     , noOp : msg
     }

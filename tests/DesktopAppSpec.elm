@@ -60,12 +60,14 @@ start =
                                 )
                 , view =
                     \model ->
-                        Html.div []
+                        { title = ""
+                        , body =
                             [ Html.text ("count:" ++ String.fromInt model.count)
                             , Html.text ("uiState:" ++ Debug.toString model.uiState)
                             , Html.button [ onClick Increment ] [ Html.text "Increment" ]
                             , Html.button [ onClick Toggle ] [ Html.text "Toggle" ]
                             ]
+                        }
                 , files =
                     DesktopApp.jsonFile identity
                         (DesktopApp.jsonMapping Loaded
