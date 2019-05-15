@@ -30,7 +30,7 @@ For example:
 
     type alias Model = { ... }
     type Msg = ...
-    type alias Flags = ()
+    type alias Flags = ...
 
     main : Program Flags (DesktopApp.Model Model) Msg
     main =
