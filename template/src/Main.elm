@@ -17,7 +17,6 @@ main =
         , subscriptions = \model -> Sub.none
         , view = view
         , persistence = Just persistence
-        , noOp = NoOp
         }
 
 
@@ -33,17 +32,13 @@ init =
 
 
 type Msg
-    = NoOp
-    | Loaded Int
+    = Loaded Int
     | Increment
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        NoOp ->
-            model
-
         Loaded newCount ->
             { model | count = newCount }
 

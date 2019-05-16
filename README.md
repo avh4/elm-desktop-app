@@ -45,7 +45,6 @@ main =
         , subscriptions = \model -> Sub.none
         , view = view
         , persistence = Just persistence
-        , noOp = NoOp
         }
         
 type alias Model =

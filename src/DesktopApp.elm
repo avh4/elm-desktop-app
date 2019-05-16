@@ -48,7 +48,6 @@ type alias Msg yourMsg =
 command line tool to build your app.
 
   - `init`, `update`, `subscription`, `view`: These are the same as in any Elm program.
-  - `noOp`: You must provide a msg that will do nothing (so that I can propertly wire up the electron ports).
   - `persistence`: This specifies how the data for you app will be saved to the user's filesystem. (If `Nothing`, then you app will not persist any data.)
 
 -}
@@ -58,7 +57,6 @@ program :
     , subscriptions : model -> Sub msg
     , view : model -> Browser.Document msg
     , persistence : Maybe (JsonMapping msg model)
-    , noOp : msg
     }
     -> Program () (Model model) (Msg msg)
 program config =

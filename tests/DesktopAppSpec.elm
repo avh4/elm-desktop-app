@@ -17,8 +17,7 @@ type alias TestModel =
 
 
 type TestMsg
-    = NoOp
-    | Loaded Int
+    = Loaded Int
     | Increment
     | Toggle
 
@@ -42,9 +41,6 @@ start =
                 , update =
                     \msg model ->
                         case msg of
-                            NoOp ->
-                                ( model, Cmd.none )
-
                             Loaded newCount ->
                                 ( { model | count = newCount }
                                 , Cmd.none
@@ -73,7 +69,6 @@ start =
                     JsonMapping.object Loaded
                         |> JsonMapping.withInt "count" .count
                         |> Just
-                , noOp = NoOp
                 }
     in
     TestContext.create
@@ -123,10 +118,10 @@ simulateLoadUserData loadedContent testContext =
 
 
 simulateUserDataNotFound :
-    TestContext.TestContext (DesktopApp.Msg TestMsg) model ( cmd, List DesktopApp.Effect )
-    -> TestContext.TestContext (DesktopApp.Msg TestMsg) model ( cmd, List DesktopApp.Effect )
+    TestContext.TestContext (DesktopApp.Msg msg) model ( cmd, List DesktopApp.Effect )
+    -> TestContext.TestContext (DesktopApp.Msg msg) model ( cmd, List DesktopApp.Effect )
 simulateUserDataNotFound testContext =
     testContext
         |> TestContext.shouldHaveLastEffect (Tuple.second >> Expect.equal [ DesktopApp.LoadUserData ])
         -- TODO: Avoid manually creating the msg after https://github.com/avh4/elm-program-test/issues/17 is implemented
-        |> TestContext.update (DesktopApp.AppMsg NoOp)
+        |> TestContext.update DesktopApp.NoOp

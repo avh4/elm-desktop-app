@@ -28,6 +28,7 @@ type Model yourModel
 
 type Msg yourMsg
     = AppMsg yourMsg
+    | NoOp
 
 
 program :
@@ -36,7 +37,6 @@ program :
     , subscriptions : model -> Sub msg
     , view : model -> Browser.Document msg
     , persistence : Maybe (JsonMapping msg model)
-    , noOp : msg
     }
     ->
         { init : () -> ( Model model, ( Cmd (Msg msg), List Effect ) )
@@ -103,6 +103,10 @@ program config =
                     in
                     Model { model | appModel = newModel }
                         |> saveFiles cmd
+
+                NoOp ->
+                    Model model
+                        |> saveFiles Cmd.none
     , subscriptions =
         let
             handleLoad result =
@@ -110,24 +114,24 @@ program config =
                     ( _, Nothing ) ->
                         -- We shouldn't have tried to a load a file since this app doesn't support persistence
                         -- Technically this is an error condition, but it's safe to just ignore the data
-                        config.noOp
+                        NoOp
 
                     ( Nothing, Just _ ) ->
-                        config.noOp
+                        NoOp
 
                     ( Just body, Just jsonMapping ) ->
                         case Json.Decode.decodeString (JsonMapping.decoder jsonMapping) body of
                             Err err ->
                                 -- Log error?
-                                config.noOp
+                                NoOp
 
                             Ok value ->
-                                value
+                                AppMsg value
         in
         \(Model model) ->
             Sub.batch
                 [ config.subscriptions model.appModel |> Sub.map AppMsg
-                , Ports.userDataLoaded handleLoad |> Sub.map AppMsg
+                , Ports.userDataLoaded handleLoad
                 ]
     , view =
         \(Model model) ->
