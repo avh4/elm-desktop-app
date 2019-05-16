@@ -4,6 +4,7 @@ import BeautifulExample
 import Browser
 import Color
 import DesktopApp
+import DesktopApp.JsonMapping as JsonMapping
 import Html exposing (Html)
 import Html.Attributes exposing (placeholder, style, type_, value)
 import Html.Events exposing (onCheck, onClick, onInput)
@@ -131,7 +132,7 @@ view model =
 
 files : DesktopApp.File Model Msg
 files =
-    DesktopApp.jsonMapping Loaded
-        |> DesktopApp.withString "name" .name
-        |> DesktopApp.withInt "count" .count
+    JsonMapping.object Loaded
+        |> JsonMapping.withString "name" .name
+        |> JsonMapping.withInt "count" .count
         |> DesktopApp.jsonFile identity

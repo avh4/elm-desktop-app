@@ -1,5 +1,6 @@
 module DesktopAppSpec exposing (all)
 
+import DesktopApp.JsonMapping as JsonMapping
 import DesktopApp.Testable as DesktopApp
 import Expect exposing (Expectation)
 import Html
@@ -70,8 +71,8 @@ start =
                         }
                 , files =
                     DesktopApp.jsonFile identity
-                        (DesktopApp.jsonMapping Loaded
-                            |> DesktopApp.withInt "count" .count
+                        (JsonMapping.object Loaded
+                            |> JsonMapping.withInt "count" .count
                         )
                 , noOp = NoOp
                 }

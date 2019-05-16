@@ -35,6 +35,7 @@ Edit the generated `src/Main.elm` to implement your app and define how to persis
 
 ```elm
 import DesktopApp
+import DesktopApp.JsonMapping as JsonMapping
 
 main : Program () (DesktopApp.Model Model) Msg
 main =
@@ -56,9 +57,9 @@ type alias Model =
     
 files : DesktopApp.File Model Msg
 files =
-    DesktopApp.jsonMapping Loaded
-        |> DesktopApp.withString "name" .name
-        |> DesktopApp.withInt "count" .count
+    JsonMapping.object Loaded
+        |> JsonMapping.withString "name" .name
+        |> JsonMapping.withInt "count" .count
         |> DesktopApp.jsonFile identity
 ```
 

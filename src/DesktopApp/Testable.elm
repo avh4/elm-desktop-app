@@ -1,18 +1,13 @@
 module DesktopApp.Testable exposing
     ( Effect(..)
     , File
-    , JsonMapping
     , Model
     , jsonFile
-    , jsonMapping
     , program
-    , staticString
-    , with
-    , withInt
-    , withString
     )
 
 import Browser
+import DesktopApp.JsonMapping as JsonMapping exposing (JsonMapping)
 import DesktopApp.Ports as Ports
 import Dict exposing (Dict)
 import Html exposing (Html)
@@ -74,7 +69,7 @@ program config =
 
         decoder =
             config.files
-                |> (\(File (JsonMapping _ decode)) -> decode)
+                |> (\(File jsonMapping) -> JsonMapping.decoder jsonMapping)
     in
     { init =
         \() ->
@@ -130,44 +125,10 @@ type File model msg
 
 
 encodeFile : File model msg -> model -> String
-encodeFile (File (JsonMapping fields _)) model =
-    let
-        json =
-            Json.object
-                (List.map (\( k, f ) -> ( k, f model )) fields)
-    in
-    Json.encode 0 json
+encodeFile (File jsonMapping) model =
+    JsonMapping.encode jsonMapping model
 
 
 jsonFile : (b -> msg) -> JsonMapping b a -> File a msg
-jsonFile toMsg (JsonMapping encode decode) =
-    File (JsonMapping encode (Json.Decode.map toMsg decode))
-
-
-type JsonMapping a b
-    = JsonMapping (List ( String, b -> Json.Value )) (Decoder a)
-
-
-jsonMapping : a -> JsonMapping a b
-jsonMapping a =
-    JsonMapping [] (Json.Decode.succeed a)
-
-
-with : String -> (x -> a) -> (a -> Json.Value) -> Decoder a -> JsonMapping (a -> b) x -> JsonMapping b x
-with name get toJson fd (JsonMapping fields decoder) =
-    JsonMapping (( name, get >> toJson ) :: fields) (Json.Decode.map2 (\a f -> f a) (Json.Decode.field name fd) decoder)
-
-
-withInt : String -> (x -> Int) -> JsonMapping (Int -> b) x -> JsonMapping b x
-withInt name get =
-    with name get Json.int Json.Decode.int
-
-
-withString : String -> (x -> String) -> JsonMapping (String -> b) x -> JsonMapping b x
-withString name get =
-    with name get Json.string Json.Decode.string
-
-
-staticString : String -> String -> JsonMapping a x -> JsonMapping a x
-staticString name value (JsonMapping fields decoder) =
-    JsonMapping (( name, \_ -> Json.string value ) :: fields) decoder
+jsonFile toMsg jsonMapping =
+    File (JsonMapping.map toMsg jsonMapping)

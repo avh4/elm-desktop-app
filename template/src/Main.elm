@@ -2,6 +2,7 @@ module Main exposing (main)
 
 import Browser
 import DesktopApp
+import DesktopApp.JsonMapping as JsonMapping
 import Html exposing (Html)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
@@ -67,6 +68,6 @@ view model =
 
 files : DesktopApp.File Model Msg
 files =
-    DesktopApp.jsonMapping Loaded
-        |> DesktopApp.withInt "count" .count
+    JsonMapping.object Loaded
+        |> JsonMapping.withInt "count" .count
         |> DesktopApp.jsonFile identity

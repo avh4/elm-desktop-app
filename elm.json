@@ -5,7 +5,8 @@
     "license": "MIT",
     "version": "1.0.0",
     "exposed-modules": [
-        "DesktopApp"
+        "DesktopApp",
+        "DesktopApp.JsonMapping"
     ],
     "elm-version": "0.19.0 <= v < 0.20.0",
     "dependencies": {
