@@ -4,7 +4,7 @@
 
 
 `elm-desktop-app` is the simplest way to write desktop applications in [Elm].
-It is built on top of [Electron], and currently supports the following uses:
+It's built on top of [Electron], and it currently supports the following uses:
 
 - Your app can **persist state to disk** as a JSON file
   - automatically to your end user's ["userData" directory](https://electronjs.org/docs/api/app#appgetpathname)
@@ -73,7 +73,7 @@ elm-desktop-app run
 
 The user data for your app is automatically persisted! 💾🎉
 
-You can easily build Mac, Linux, and Windows packages (packages are built to `./elm-stuff/elm-desktop-app/app/dist/`:
+You can easily build Mac, Linux, and Windows packages (packages are built to `./elm-stuff/elm-desktop-app/app/dist/`):
 
 ```sh
 elm-desktop-app package
