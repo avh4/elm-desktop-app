@@ -7,9 +7,9 @@ Scenario: the init app compiles
 
 Scenario: simple app that writes data files
   When I create a new app
-  And I make change my program's files to
+  And I make change my program's persistence to
     """
-    App.jsonFile identity (JsonMapping.object () |> JsonMapping.staticString "key" "value")
+    JsonMapping.object () |> JsonMapping.staticString "key" "value"
     """
   And I run the app with "test-data.json"
   Then the JSON file "test-data.json" is

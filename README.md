@@ -35,7 +35,7 @@ Edit the generated `src/Main.elm` to implement your app and define how to persis
 
 ```elm
 import DesktopApp
-import DesktopApp.JsonMapping as JsonMapping
+import DesktopApp.JsonMapping as JsonMapping exposing (JsonMapping)
 
 main : Program () (DesktopApp.Model Model) Msg
 main =
@@ -44,7 +44,7 @@ main =
         , update = \msg model -> ( update msg model, Cmd.none )
         , subscriptions = \model -> Sub.none
         , view = view
-        , files = files
+        , persistence = persistence
         , noOp = NoOp
         }
         
@@ -55,12 +55,11 @@ type alias Model =
     
 ...
     
-files : DesktopApp.File Model Msg
-files =
+persistence : JsonMapping Msg Model
+persistence =
     JsonMapping.object Loaded
         |> JsonMapping.withString "name" .name
         |> JsonMapping.withInt "count" .count
-        |> DesktopApp.jsonFile identity
 ```
 
 Use the command line tool to run your app:

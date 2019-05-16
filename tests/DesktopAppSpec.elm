@@ -69,11 +69,9 @@ start =
                             , Html.button [ onClick Toggle ] [ Html.text "Toggle" ]
                             ]
                         }
-                , files =
-                    DesktopApp.jsonFile identity
-                        (JsonMapping.object Loaded
-                            |> JsonMapping.withInt "count" .count
-                        )
+                , persistence =
+                    JsonMapping.object Loaded
+                        |> JsonMapping.withInt "count" .count
                 , noOp = NoOp
                 }
     in

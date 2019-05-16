@@ -4,7 +4,7 @@ import BeautifulExample
 import Browser
 import Color
 import DesktopApp
-import DesktopApp.JsonMapping as JsonMapping
+import DesktopApp.JsonMapping as JsonMapping exposing (JsonMapping)
 import Html exposing (Html)
 import Html.Attributes exposing (placeholder, style, type_, value)
 import Html.Events exposing (onCheck, onClick, onInput)
@@ -19,7 +19,7 @@ main =
         , update = \msg model -> ( update msg model, Cmd.none )
         , subscriptions = \model -> Sub.none
         , view = view
-        , files = files
+        , persistence = persistence
         , noOp = NoOp
         }
 
@@ -130,9 +130,8 @@ view model =
     }
 
 
-files : DesktopApp.File Model Msg
-files =
+persistence : JsonMapping Msg Model
+persistence =
     JsonMapping.object Loaded
         |> JsonMapping.withString "name" .name
         |> JsonMapping.withInt "count" .count
-        |> DesktopApp.jsonFile identity

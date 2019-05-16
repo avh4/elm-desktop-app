@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Browser
 import DesktopApp
-import DesktopApp.JsonMapping as JsonMapping
+import DesktopApp.JsonMapping as JsonMapping exposing (JsonMapping)
 import Html exposing (Html)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
@@ -16,7 +16,7 @@ main =
         , update = \msg model -> ( update msg model, Cmd.none )
         , subscriptions = \model -> Sub.none
         , view = view
-        , files = files
+        , persistence = persistence
         , noOp = NoOp
         }
 
@@ -66,8 +66,7 @@ view model =
     }
 
 
-files : DesktopApp.File Model Msg
-files =
+persistence : JsonMapping Msg Model
+persistence =
     JsonMapping.object Loaded
         |> JsonMapping.withInt "count" .count
-        |> DesktopApp.jsonFile identity

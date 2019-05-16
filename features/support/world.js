@@ -14,7 +14,7 @@ class CustomWorld {
         update: "\\_ model -> (model, Cmd.none)",
         subscriptions: "\\_ -> Sub.none",
         view: "\\model -> { title = \"\", body = [ Html.text (Debug.toString model) ] }",
-        files: "Debug.todo \"\"",
+        persistence: "Debug.todo \"\"",
         noOp: "()"
       }
     };
@@ -47,7 +47,7 @@ class CustomWorld {
       stream.write(`    , update = ${Main.main.update}\n`);
       stream.write(`    , subscriptions = ${Main.main.subscriptions}\n`);
       stream.write(`    , view = ${Main.main.view}\n`);
-      stream.write(`    , files = ${Main.main.files}\n`);
+      stream.write(`    , persistence = ${Main.main.persistence}\n`);
       stream.write(`    , noOp = ${Main.main.noOp}\n`);
       stream.write("    }\n");
       stream.close();

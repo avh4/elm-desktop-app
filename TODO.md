@@ -1,7 +1,6 @@
 ## first release
 
 - Publish Elm package
-  - Get rid of File
   - Should we wrap Msg? -- probably yes (esp if this gets rid of `noOp`)
   - Make sure referenced types are exposed
   - `files` (or "userData"?) should be a Maybe

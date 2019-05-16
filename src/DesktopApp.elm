@@ -1,13 +1,8 @@
-module DesktopApp exposing
-    ( program, Model
-    , File, jsonFile
-    )
+module DesktopApp exposing (program, Model)
 
 {-|
 
 @docs program, Model
-
-@docs File, jsonFile
 
 -}
 
@@ -47,7 +42,7 @@ command line tool to build your app.
 
   - `init`, `update`, `subscription`, `view`: These are the same as in any Elm program.
   - `noOp`: You must provide a msg that will do nothing (so that I can propertly wire up the electron ports).
-  - `files`: This specifies how the data for you app will be saved to the user's filesystem.
+  - `persistence`: This specifies how the data for you app will be saved to the user's filesystem.
 
 -}
 program :
@@ -55,7 +50,7 @@ program :
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
     , view : model -> Browser.Document msg
-    , files : File model msg
+    , persistence : JsonMapping msg model
     , noOp : msg
     }
     -> Program () (Model model) msg
@@ -92,16 +87,3 @@ program config =
                     |> Tuple.mapSecond performAll
         , view = p.view
         }
-
-
-{-| Represents how a given `model` can be saved to and loaded from disk.
--}
-type alias File model msg =
-    DesktopApp.File model msg
-
-
-{-| A `File` that is serialized as JSON.
--}
-jsonFile : (b -> msg) -> JsonMapping b a -> File a msg
-jsonFile =
-    DesktopApp.jsonFile

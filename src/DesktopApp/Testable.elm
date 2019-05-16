@@ -1,8 +1,6 @@
 module DesktopApp.Testable exposing
     ( Effect(..)
-    , File
     , Model
-    , jsonFile
     , program
     )
 
@@ -32,7 +30,7 @@ program :
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
     , view : model -> Browser.Document msg
-    , files : File model msg
+    , persistence : JsonMapping msg model
     , noOp : msg
     }
     ->
@@ -49,7 +47,7 @@ program config =
                 ( newLastSaved, writeEffects ) =
                     let
                         newContent =
-                            encodeFile config.files model.appModel
+                            JsonMapping.encode config.persistence model.appModel
                     in
                     if model.lastSaved == Just newContent then
                         -- This file hasn't changed, so do nothing
@@ -66,10 +64,6 @@ program config =
               , writeEffects
               )
             )
-
-        decoder =
-            config.files
-                |> (\(File jsonMapping) -> JsonMapping.decoder jsonMapping)
     in
     { init =
         \() ->
@@ -101,7 +95,7 @@ program config =
                         config.noOp
 
                     Just body ->
-                        case Json.Decode.decodeString decoder body of
+                        case Json.Decode.decodeString (JsonMapping.decoder config.persistence) body of
                             Err err ->
                                 -- Log error?
                                 config.noOp
@@ -118,17 +112,3 @@ program config =
         \(Model model) ->
             config.view model.appModel
     }
-
-
-type File model msg
-    = File (JsonMapping msg model)
-
-
-encodeFile : File model msg -> model -> String
-encodeFile (File jsonMapping) model =
-    JsonMapping.encode jsonMapping model
-
-
-jsonFile : (b -> msg) -> JsonMapping b a -> File a msg
-jsonFile toMsg jsonMapping =
-    File (JsonMapping.map toMsg jsonMapping)

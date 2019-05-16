@@ -39,7 +39,7 @@ Given('an existing app', function () {
         Inc -> (model+1, Cmd.none)\n\
         Loaded i -> (i, Cmd.none)";
   this.Main.main.view = "\\model -> { title = \"\", body = [ Html.button [onClick Inc] [Html.text \"+\"] ] }";
-  this.Main.main.files = "App.jsonFile Loaded (JsonMapping.object identity |> JsonMapping.withInt \"count\" identity)";
+  this.Main.main.persistence = "JsonMapping.object Loaded |> JsonMapping.withInt \"count\" identity";
   this.Main.main.noOp = "NoOp";
   return this.writeMain();
 });
@@ -48,8 +48,8 @@ When('I create a new app', function () {
   initProject(this);
 });
 
-When('I make change my program\'s files to', function (docString) {
-  this.Main.main.files = docString;
+When('I make change my program\'s persistence to', function (docString) {
+  this.Main.main.persistence = docString;
   return this.writeMain();
 });
 
