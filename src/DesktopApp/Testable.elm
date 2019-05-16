@@ -30,7 +30,7 @@ program :
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
     , view : model -> Browser.Document msg
-    , persistence : JsonMapping msg model
+    , persistence : Maybe (JsonMapping msg model)
     , noOp : msg
     }
     ->
@@ -42,28 +42,35 @@ program :
 program config =
     let
         saveFiles cmd (Model model) =
-            -- TODO: is there a way we can check equality of the accessed fields in the JsonMapping, and avoid encoding the data to Json.Value and then to String if we don't need to?
-            let
-                ( newLastSaved, writeEffects ) =
-                    let
-                        newContent =
-                            JsonMapping.encode config.persistence model.appModel
-                    in
-                    if model.lastSaved == Just newContent then
-                        -- This file hasn't changed, so do nothing
-                        ( model.lastSaved, [] )
+            case config.persistence of
+                Nothing ->
+                    ( Model model
+                    , ( cmd, [] )
+                    )
 
-                    else
-                        -- This file needs to be written out
-                        ( Just newContent
-                        , [ WriteUserData newContent ]
-                        )
-            in
-            ( Model { model | lastSaved = newLastSaved }
-            , ( cmd
-              , writeEffects
-              )
-            )
+                Just jsonMapping ->
+                    -- TODO: is there a way we can check equality of the accessed fields in the JsonMapping, and avoid encoding the data to Json.Value and then to String if we don't need to?
+                    let
+                        ( newLastSaved, writeEffects ) =
+                            let
+                                newContent =
+                                    JsonMapping.encode jsonMapping model.appModel
+                            in
+                            if model.lastSaved == Just newContent then
+                                -- This file hasn't changed, so do nothing
+                                ( model.lastSaved, [] )
+
+                            else
+                                -- This file needs to be written out
+                                ( Just newContent
+                                , [ WriteUserData newContent ]
+                                )
+                    in
+                    ( Model { model | lastSaved = newLastSaved }
+                    , ( cmd
+                      , writeEffects
+                      )
+                    )
     in
     { init =
         \() ->
@@ -90,12 +97,17 @@ program config =
     , subscriptions =
         let
             handleLoad result =
-                case result of
-                    Nothing ->
+                case ( result, config.persistence ) of
+                    ( _, Nothing ) ->
+                        -- We shouldn't have tried to a load a file since this app doesn't support persistence
+                        -- Technically this is an error condition, but it's safe to just ignore the data
                         config.noOp
 
-                    Just body ->
-                        case Json.Decode.decodeString (JsonMapping.decoder config.persistence) body of
+                    ( Nothing, Just _ ) ->
+                        config.noOp
+
+                    ( Just body, Just jsonMapping ) ->
+                        case Json.Decode.decodeString (JsonMapping.decoder jsonMapping) body of
                             Err err ->
                                 -- Log error?
                                 config.noOp

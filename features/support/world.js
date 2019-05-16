@@ -14,7 +14,7 @@ class CustomWorld {
         update: "\\_ model -> (model, Cmd.none)",
         subscriptions: "\\_ -> Sub.none",
         view: "\\model -> { title = \"\", body = [ Html.text (Debug.toString model) ] }",
-        persistence: "Debug.todo \"\"",
+        persistence: "Nothing",
         noOp: "()"
       }
     };

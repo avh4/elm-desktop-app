@@ -16,7 +16,7 @@ main =
         , update = \msg model -> ( update msg model, Cmd.none )
         , subscriptions = \model -> Sub.none
         , view = view
-        , persistence = persistence
+        , persistence = Just persistence
         , noOp = NoOp
         }
 
