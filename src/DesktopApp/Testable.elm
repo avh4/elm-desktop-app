@@ -28,7 +28,7 @@ type Model yourModel
 
 type Msg yourMsg
     = AppMsg yourMsg
-    | NoOp
+    | UserDataLoaded (Maybe String)
 
 
 program :
@@ -45,40 +45,6 @@ program :
         , view : Model model -> Browser.Document (Msg msg)
         }
 program config =
-    let
-        saveFiles cmd (Model model) =
-            case config.persistence of
-                Nothing ->
-                    ( Model model
-                    , ( cmd |> Cmd.map AppMsg
-                      , []
-                      )
-                    )
-
-                Just jsonMapping ->
-                    -- TODO: is there a way we can check equality of the accessed fields in the JsonMapping, and avoid encoding the data to Json.Value and then to String if we don't need to?
-                    let
-                        ( newLastSaved, writeEffects ) =
-                            let
-                                newContent =
-                                    JsonMapping.encode jsonMapping model.appModel
-                            in
-                            if model.lastSaved == Just newContent then
-                                -- This file hasn't changed, so do nothing
-                                ( model.lastSaved, [] )
-
-                            else
-                                -- This file needs to be written out
-                                ( Just newContent
-                                , [ WriteUserData newContent ]
-                                )
-                    in
-                    ( Model { model | lastSaved = newLastSaved }
-                    , ( cmd |> Cmd.map AppMsg
-                      , writeEffects
-                      )
-                    )
-    in
     { init =
         \() ->
             let
@@ -93,45 +59,12 @@ program config =
               , [ LoadUserData ]
               )
             )
-    , update =
-        \msg (Model model) ->
-            case msg of
-                AppMsg appMsg ->
-                    let
-                        ( newModel, cmd ) =
-                            config.update appMsg model.appModel
-                    in
-                    Model { model | appModel = newModel }
-                        |> saveFiles cmd
-
-                NoOp ->
-                    Model model
-                        |> saveFiles Cmd.none
+    , update = update config
     , subscriptions =
-        let
-            handleLoad result =
-                case ( result, config.persistence ) of
-                    ( _, Nothing ) ->
-                        -- We shouldn't have tried to a load a file since this app doesn't support persistence
-                        -- Technically this is an error condition, but it's safe to just ignore the data
-                        NoOp
-
-                    ( Nothing, Just _ ) ->
-                        NoOp
-
-                    ( Just body, Just jsonMapping ) ->
-                        case Json.Decode.decodeString (JsonMapping.decoder jsonMapping) body of
-                            Err err ->
-                                -- Log error?
-                                NoOp
-
-                            Ok value ->
-                                AppMsg value
-        in
         \(Model model) ->
             Sub.batch
                 [ config.subscriptions model.appModel |> Sub.map AppMsg
-                , Ports.userDataLoaded handleLoad
+                , Ports.userDataLoaded UserDataLoaded
                 ]
     , view =
         \(Model model) ->
@@ -143,3 +76,69 @@ program config =
             , body = body |> List.map (Html.map AppMsg)
             }
     }
+
+
+update config msg (Model model) =
+    case msg of
+        AppMsg appMsg ->
+            let
+                ( newModel, cmd ) =
+                    config.update appMsg model.appModel
+            in
+            Model { model | appModel = newModel }
+                |> saveFiles config cmd
+
+        UserDataLoaded Nothing ->
+            -- The file didn't exist, so let's persist the initial model
+            Model model
+                |> saveFiles config Cmd.none
+
+        UserDataLoaded (Just content) ->
+            case config.persistence of
+                Nothing ->
+                    -- We shouldn't have tried to a load a file since this app doesn't support persistence
+                    -- Technically this is an error condition, but it's safe to just ignore the data
+                    ( Model model, ( Cmd.none, [] ) )
+
+                Just jsonMapping ->
+                    case Json.Decode.decodeString (JsonMapping.decoder jsonMapping) content of
+                        Err err ->
+                            -- Log error?
+                            ( Model model, ( Cmd.none, [] ) )
+
+                        Ok value ->
+                            update config (AppMsg value) (Model model)
+
+
+saveFiles config cmd (Model model) =
+    case config.persistence of
+        Nothing ->
+            ( Model model
+            , ( cmd |> Cmd.map AppMsg
+              , []
+              )
+            )
+
+        Just jsonMapping ->
+            -- TODO: is there a way we can check equality of the accessed fields in the JsonMapping, and avoid encoding the data to Json.Value and then to String if we don't need to?
+            let
+                ( newLastSaved, writeEffects ) =
+                    let
+                        newContent =
+                            JsonMapping.encode jsonMapping model.appModel
+                    in
+                    if model.lastSaved == Just newContent then
+                        -- This file hasn't changed, so do nothing
+                        ( model.lastSaved, [] )
+
+                    else
+                        -- This file needs to be written out
+                        ( Just newContent
+                        , [ WriteUserData newContent ]
+                        )
+            in
+            ( Model { model | lastSaved = newLastSaved }
+            , ( cmd |> Cmd.map AppMsg
+              , writeEffects
+              )
+            )

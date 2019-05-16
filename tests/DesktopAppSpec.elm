@@ -108,13 +108,13 @@ all =
 
 simulateLoadUserData :
     String
-    -> TestContext.TestContext (DesktopApp.Msg TestMsg) model ( cmd, List DesktopApp.Effect )
-    -> TestContext.TestContext (DesktopApp.Msg TestMsg) model ( cmd, List DesktopApp.Effect )
+    -> TestContext.TestContext (DesktopApp.Msg msg) model ( cmd, List DesktopApp.Effect )
+    -> TestContext.TestContext (DesktopApp.Msg msg) model ( cmd, List DesktopApp.Effect )
 simulateLoadUserData loadedContent testContext =
     testContext
         |> TestContext.shouldHaveLastEffect (Tuple.second >> Expect.equal [ DesktopApp.LoadUserData ])
         -- TODO: Avoid manually creating the msg after https://github.com/avh4/elm-program-test/issues/17 is implemented
-        |> TestContext.update (DesktopApp.AppMsg (Loaded 7))
+        |> TestContext.update (DesktopApp.UserDataLoaded (Just loadedContent))
 
 
 simulateUserDataNotFound :
@@ -124,4 +124,4 @@ simulateUserDataNotFound testContext =
     testContext
         |> TestContext.shouldHaveLastEffect (Tuple.second >> Expect.equal [ DesktopApp.LoadUserData ])
         -- TODO: Avoid manually creating the msg after https://github.com/avh4/elm-program-test/issues/17 is implemented
-        |> TestContext.update DesktopApp.NoOp
+        |> TestContext.update (DesktopApp.UserDataLoaded Nothing)
