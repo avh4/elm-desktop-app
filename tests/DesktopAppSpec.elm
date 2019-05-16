@@ -24,7 +24,7 @@ type TestMsg
 
 
 type alias TestContext =
-    TestContext.TestContext TestMsg (DesktopApp.Model TestModel) ( Cmd TestMsg, List DesktopApp.Effect )
+    TestContext.TestContext (DesktopApp.Msg TestMsg) (DesktopApp.Model TestModel) ( Cmd (DesktopApp.Msg TestMsg), List DesktopApp.Effect )
 
 
 start : TestContext
@@ -113,20 +113,20 @@ all =
 
 simulateLoadUserData :
     String
-    -> TestContext.TestContext TestMsg model ( cmd, List DesktopApp.Effect )
-    -> TestContext.TestContext TestMsg model ( cmd, List DesktopApp.Effect )
+    -> TestContext.TestContext (DesktopApp.Msg TestMsg) model ( cmd, List DesktopApp.Effect )
+    -> TestContext.TestContext (DesktopApp.Msg TestMsg) model ( cmd, List DesktopApp.Effect )
 simulateLoadUserData loadedContent testContext =
     testContext
         |> TestContext.shouldHaveLastEffect (Tuple.second >> Expect.equal [ DesktopApp.LoadUserData ])
         -- TODO: Avoid manually creating the msg after https://github.com/avh4/elm-program-test/issues/17 is implemented
-        |> TestContext.update (Loaded 7)
+        |> TestContext.update (DesktopApp.AppMsg (Loaded 7))
 
 
 simulateUserDataNotFound :
-    TestContext.TestContext TestMsg model ( cmd, List DesktopApp.Effect )
-    -> TestContext.TestContext TestMsg model ( cmd, List DesktopApp.Effect )
+    TestContext.TestContext (DesktopApp.Msg TestMsg) model ( cmd, List DesktopApp.Effect )
+    -> TestContext.TestContext (DesktopApp.Msg TestMsg) model ( cmd, List DesktopApp.Effect )
 simulateUserDataNotFound testContext =
     testContext
         |> TestContext.shouldHaveLastEffect (Tuple.second >> Expect.equal [ DesktopApp.LoadUserData ])
         -- TODO: Avoid manually creating the msg after https://github.com/avh4/elm-program-test/issues/17 is implemented
-        |> TestContext.update NoOp
+        |> TestContext.update (DesktopApp.AppMsg NoOp)

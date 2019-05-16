@@ -1,8 +1,8 @@
-module DesktopApp exposing (program, Model)
+module DesktopApp exposing (program, Model, Msg)
 
 {-|
 
-@docs program, Model
+@docs program, Model, Msg
 
 -}
 
@@ -28,13 +28,20 @@ For example:
     type Msg = ...
     type alias Flags = ...
 
-    main : Program Flags (DesktopApp.Model Model) Msg
+    main : Program Flags (DesktopApp.Model Model) (DesktopApp.Msg Msg)
     main =
         DesktopApp.program { ... }
 
 -}
 type alias Model yourModel =
     DesktopApp.Model yourModel
+
+
+{-| This is the Msg type for your Elm program when using `DesktopApp.program`.
+(See the example for [`Model`](#Model).)
+-}
+type alias Msg yourMsg =
+    DesktopApp.Msg yourMsg
 
 
 {-| Use this to define your `main` in your `Main.elm` file, and then use the `elm-desktop-app`
@@ -53,7 +60,7 @@ program :
     , persistence : Maybe (JsonMapping msg model)
     , noOp : msg
     }
-    -> Program () (Model model) msg
+    -> Program () (Model model) (Msg msg)
 program config =
     let
         p =

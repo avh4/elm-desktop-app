@@ -1,6 +1,7 @@
 module DesktopApp.Testable exposing
     ( Effect(..)
     , Model
+    , Msg(..)
     , program
     )
 
@@ -25,6 +26,10 @@ type Model yourModel
         }
 
 
+type Msg yourMsg
+    = AppMsg yourMsg
+
+
 program :
     { init : ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
@@ -34,10 +39,10 @@ program :
     , noOp : msg
     }
     ->
-        { init : () -> ( Model model, ( Cmd msg, List Effect ) )
-        , subscriptions : Model model -> Sub msg
-        , update : msg -> Model model -> ( Model model, ( Cmd msg, List Effect ) )
-        , view : Model model -> Browser.Document msg
+        { init : () -> ( Model model, ( Cmd (Msg msg), List Effect ) )
+        , subscriptions : Model model -> Sub (Msg msg)
+        , update : Msg msg -> Model model -> ( Model model, ( Cmd (Msg msg), List Effect ) )
+        , view : Model model -> Browser.Document (Msg msg)
         }
 program config =
     let
@@ -45,7 +50,9 @@ program config =
             case config.persistence of
                 Nothing ->
                     ( Model model
-                    , ( cmd, [] )
+                    , ( cmd |> Cmd.map AppMsg
+                      , []
+                      )
                     )
 
                 Just jsonMapping ->
@@ -67,7 +74,7 @@ program config =
                                 )
                     in
                     ( Model { model | lastSaved = newLastSaved }
-                    , ( cmd
+                    , ( cmd |> Cmd.map AppMsg
                       , writeEffects
                       )
                     )
@@ -82,18 +89,20 @@ program config =
                 { appModel = model
                 , lastSaved = Nothing
                 }
-            , ( cmd
+            , ( cmd |> Cmd.map AppMsg
               , [ LoadUserData ]
               )
             )
     , update =
         \msg (Model model) ->
-            let
-                ( newModel, cmd ) =
-                    config.update msg model.appModel
-            in
-            Model { model | appModel = newModel }
-                |> saveFiles cmd
+            case msg of
+                AppMsg appMsg ->
+                    let
+                        ( newModel, cmd ) =
+                            config.update appMsg model.appModel
+                    in
+                    Model { model | appModel = newModel }
+                        |> saveFiles cmd
     , subscriptions =
         let
             handleLoad result =
@@ -117,10 +126,16 @@ program config =
         in
         \(Model model) ->
             Sub.batch
-                [ config.subscriptions model.appModel
-                , Ports.userDataLoaded handleLoad
+                [ config.subscriptions model.appModel |> Sub.map AppMsg
+                , Ports.userDataLoaded handleLoad |> Sub.map AppMsg
                 ]
     , view =
         \(Model model) ->
-            config.view model.appModel
+            let
+                { title, body } =
+                    config.view model.appModel
+            in
+            { title = title
+            , body = body |> List.map (Html.map AppMsg)
+            }
     }
