@@ -25,11 +25,14 @@ function main(args) {
   case "init":
     const mngen = require("mngen");
 
+    const randomName = mngen.word(3);
+
     shell.exec("yes | elm init");
     shell.exec("yes | elm install elm/json");
     const elmJson = JSON.parse(fs.readFileSync(path.join(PROJECT_DIR, "elm.json")));
     elmJson['elm-desktop-app'] = {
-      "app-id": args[2] || `net.avh4.elm-desktop-app.replace-this-with-your-own-app-id.${mngen.word(3)}`
+      "name": randomName,
+      "app-id": `net.avh4.elm-desktop-app.replace-this-with-your-own-app-id.${randomName}`,
     };
     fs.writeFileSync(path.join(PROJECT_DIR, "elm.json"), JSON.stringify(elmJson, null, 4));
 
@@ -39,6 +42,7 @@ function main(args) {
   case "package":
     build();
 
+    shell.rm("-Rf", path.join(BUILD_DIR, "dist"));
     shell.pushd(BUILD_DIR);
     if (!shell.test("-e", "node_modules/electron-builder")) {
       shell.exec("npm install --save-dev electron-builder");
@@ -62,6 +66,9 @@ function main(args) {
 }
 
 function build() {
+  const Ajv = require("ajv");
+  const ajv = new Ajv({allErrors: true});
+
   shell.mkdir("-p", GEN_DIR);
   shell.mkdir("-p", BUILD_DIR);
 
@@ -78,11 +85,17 @@ function build() {
   shell.cp("-R", path.join(DESKTOP_APP_DIR, "src"), path.join(GEN_DIR, "src"));
   shell.cp(path.join(DESKTOP_APP_DIR, "src", "DesktopApp", "RealPorts.elm"), path.join(GEN_DIR, "src", "DesktopApp", "Ports.elm"));
 
-  // TODO: validate elm.json schema
+  // validate elm.json schema
+  const validate = ajv.compile(JSON.parse(fs.readFileSync(path.join(DESKTOP_APP_DIR, "config.schema.json"))));
+  const data = JSON.parse(fs.readFileSync(path.join(PROJECT_DIR, "elm.json")));
+  const valid = validate(data);
+  if (!valid) {
+    console.log(ajv.errorsText(validate.errors));
+    process.exit(1);
+  }
 
   // Update elm.json
   const elmJson = JSON.parse(fs.readFileSync(path.join(PROJECT_DIR, "elm.json")));
-  // TODO: error if it's not an "application" project
   elmJson['source-directories'] = elmJson['source-directories'].map(function(srcDir) {
     return path.resolve(path.join(PROJECT_DIR, srcDir));
   });
@@ -93,10 +106,12 @@ function build() {
 
   // Update package.json
   const packageJson = JSON.parse(fs.readFileSync(path.join(BUILD_DIR, "package.json")));
-  const appId = elmJson['elm-desktop-app']['app-id'];
+  const config = elmJson['elm-desktop-app'];
+  const appId = config['app-id'];
   packageJson['name'] = appId;
   packageJson['build'] = {
-    appId: appId
+    appId: appId,
+    productName: config['name'],
   };
   fs.writeFileSync(path.join(BUILD_DIR, "package.json"), JSON.stringify(packageJson));
 

@@ -31,6 +31,7 @@
     "spectron": "^5.0.0"
   },
   "dependencies": {
+    "ajv": "^6.10.0",
     "mngen": "^1.1.0",
     "shelljs": "^0.8.3"
   }

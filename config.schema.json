@@ -1,0 +1,42 @@
+{
+  "type": "object",
+  "required": [
+    "type",
+    "elm-version",
+    "source-directories",
+    "elm-desktop-app"
+  ],
+  "properties": {
+    "type": {
+      "enum": [ "application" ]
+    },
+    "elm-version": {
+      "enum": [ "0.19.0" ]
+    },
+    "source-directories": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "elm-desktop-app": {
+      "type": "object",
+      "required": [
+        "app-id",
+        "name"
+      ],
+      "additionaProperties": false,
+      "properties": {
+        "app-id": {
+          "type": "string",
+          "minLength": 5
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "use-data-file-in-current-directory": {
+          "type": [ "string", "null" ]
+        }
+      }
+    }
+  }
+}
