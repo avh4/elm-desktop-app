@@ -1,6 +1,12 @@
 module DesktopApp exposing (program, Program, Model, Msg)
 
-{-|
+{-| This module lets you write desktop applications in Elm. You must use the [`elm-desktop-app` ![](https://img.shields.io/npm/v/elm-desktop-app.svg)][npm-package]
+command line tool to build your program.
+(`DesktopApp.program` will do nothing if you try to use it in a web browser.)
+
+See the [README](./) for an example of how to set up and build your application.
+
+[npm-package]: https://www.npmjs.com/package/elm-desktop-app
 
 @docs program, Program, Model, Msg
 
