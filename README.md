@@ -35,7 +35,7 @@ Edit the generated `src/Main.elm` to implement your app and define how to persis
 
 ```elm
 import DesktopApp
-import DesktopApp.JsonMapping as JsonMapping exposing (JsonMapping)
+import DesktopApp.JsonMapping as JsonMapping
 
 main : Program () (DesktopApp.Model Model) (DesktopApp.Msg Msg)
 main =
@@ -54,7 +54,7 @@ type alias Model =
     
 ...
     
-persistence : JsonMapping Msg Model
+persistence : JsonMapping.ObjectMapping Model Msg
 persistence =
     JsonMapping.object Loaded
         |> JsonMapping.with "name" .name JsonMapping.string

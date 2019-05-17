@@ -4,7 +4,7 @@ import BeautifulExample
 import Browser
 import Color
 import DesktopApp
-import DesktopApp.JsonMapping as JsonMapping exposing (JsonMapping)
+import DesktopApp.JsonMapping as JsonMapping exposing (ObjectMapping)
 import Html exposing (Html)
 import Html.Attributes exposing (placeholder, style, type_, value)
 import Html.Events exposing (onCheck, onClick, onInput)
@@ -125,7 +125,7 @@ view model =
     }
 
 
-persistence : JsonMapping Msg Model
+persistence : ObjectMapping Model Msg
 persistence =
     JsonMapping.object Loaded
         |> JsonMapping.with "name" .name JsonMapping.string

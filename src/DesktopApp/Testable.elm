@@ -6,7 +6,7 @@ module DesktopApp.Testable exposing
     )
 
 import Browser
-import DesktopApp.JsonMapping as JsonMapping exposing (JsonMapping)
+import DesktopApp.JsonMapping as JsonMapping exposing (ObjectMapping)
 import DesktopApp.Ports as Ports
 import Dict exposing (Dict)
 import Html exposing (Html)
@@ -36,7 +36,7 @@ program :
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
     , view : model -> Browser.Document msg
-    , persistence : Maybe (JsonMapping msg model)
+    , persistence : Maybe (ObjectMapping model msg)
     }
     ->
         { init : () -> ( Model model, ( Cmd (Msg msg), List Effect ) )
@@ -120,7 +120,7 @@ saveFiles config cmd (Model model) =
             )
 
         Just jsonMapping ->
-            -- TODO: is there a way we can check equality of the accessed fields in the JsonMapping, and avoid encoding the data to Json.Value and then to String if we don't need to?
+            -- TODO: is there a way we can check equality of the accessed fields in the ObjectMapping, and avoid encoding the data to Json.Value and then to String if we don't need to?
             let
                 ( newLastSaved, writeEffects ) =
                     let

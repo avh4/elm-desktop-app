@@ -1,5 +1,5 @@
 module DesktopApp.JsonMapping exposing
-    ( JsonMapping
+    ( ObjectMapping
     , encode, decoder
     , object, with, static, map
     , Codec, int, string, bool
@@ -9,7 +9,7 @@ module DesktopApp.JsonMapping exposing
 
 {-|
 
-@docs JsonMapping
+@docs ObjectMapping
 @docs encode, decoder
 
 @docs object, with, static, map
@@ -30,8 +30,8 @@ Notably, when `a` and `b` are the same it specifies a two-way mapping to and fro
 (which can then be used with [`jsonFile`](#jsonFile)).
 
 -}
-type JsonMapping a b
-    = JsonMapping (b -> List ( String, Json.Value )) (Decoder a)
+type ObjectMapping encodesFrom decodesTo
+    = ObjectMapping (encodesFrom -> List ( String, Json.Value )) (Decoder decodesTo)
 
 
 {-| TODO: rename this to JsonMapping, and rename current JsonMapping to "ObjectMapping"
@@ -40,53 +40,53 @@ type Codec a
     = Codec (a -> Json.Value) (Decoder a)
 
 
-{-| Creates a trivial `JsonMapping`.
+{-| Creates a trivial `ObjectMapping`.
 This, along with `with`, `static` make up a pipeline-style API
 which can be used like this:
 
-    import DesktopApp.JsonMapping exposing (JsonMapping, int, object, with)
+    import DesktopApp.JsonMapping exposing (ObjectMapping, int, object, with)
 
     type alias MyData =
         { total : Int
         , count : Int
         }
 
-    myJsonMapping : JsonMapping MyData MyData
-    myJsonMapping =
+    myObjectMapping : ObjectMapping MyData MyData
+    myObjectMapping =
         object MyData
             |> with "total" .total int
             |> with "count" .count int
 
 -}
-object : a -> JsonMapping a b
+object : decodesTo -> ObjectMapping encodesFrom decodesTo
 object a =
-    JsonMapping (always []) (Json.Decode.succeed a)
+    ObjectMapping (always []) (Json.Decode.succeed a)
 
 
-{-| Transforms the type that a JsonMapping decodes.
+{-| Transforms the type that a ObjectMapping decodes.
 -}
-map : (a -> b) -> JsonMapping a x -> JsonMapping b x
-map f (JsonMapping fields decode) =
-    JsonMapping fields (Json.Decode.map f decode)
+map : (a -> b) -> ObjectMapping encodesFrom a -> ObjectMapping encodesFrom b
+map f (ObjectMapping fields decode) =
+    ObjectMapping fields (Json.Decode.map f decode)
 
 
-{-| Gets the Json.Decode.Decoder for the given JsonMapping.
+{-| Gets the Json.Decode.Decoder for the given ObjectMapping.
 -}
-decoder : JsonMapping a b -> Decoder a
-decoder (JsonMapping _ dec) =
+decoder : ObjectMapping encodesFrom decodesTo -> Decoder decodesTo
+decoder (ObjectMapping _ dec) =
     dec
 
 
-{-| Encodes a given value with the given JsonMapping (into a JSON string).
+{-| Encodes a given value with the given ObjectMapping (into a JSON string).
 -}
-encode : JsonMapping a b -> b -> String
+encode : ObjectMapping encodesFrom decodesTo -> encodesFrom -> String
 encode mapping model =
     encodeValue mapping model
         |> Json.encode 0
 
 
-encodeValue : JsonMapping a b -> b -> Json.Value
-encodeValue (JsonMapping fields _) model =
+encodeValue : ObjectMapping encodesFrom decodesTo -> encodesFrom -> Json.Value
+encodeValue (ObjectMapping fields _) model =
     fields model
         |> List.reverse
         |> Json.object
@@ -129,16 +129,21 @@ mapCodec en de (Codec enc dec) =
     Codec (en >> enc) (Json.Decode.map de dec)
 
 
-fromMapping : JsonMapping a a -> Codec a
+fromMapping : ObjectMapping a a -> Codec a
 fromMapping mapping =
     Codec (encodeValue mapping) (decoder mapping)
 
 
 {-| Adds a field to an object. It will be represented in both your Elm model and in the JSON.
 -}
-with : String -> (x -> a) -> Codec a -> JsonMapping (a -> b) x -> JsonMapping b x
-with name get (Codec toJson fd) (JsonMapping fields dec) =
-    JsonMapping
+with :
+    String
+    -> (encodesFrom -> a)
+    -> Codec a
+    -> ObjectMapping encodesFrom (a -> decodesTo)
+    -> ObjectMapping encodesFrom decodesTo
+with name get (Codec toJson fd) (ObjectMapping fields dec) =
+    ObjectMapping
         (\x -> ( name, get x |> toJson ) :: fields x)
         (Json.Decode.map2 (\a f -> f a) (Json.Decode.field name fd) dec)
 
@@ -146,9 +151,9 @@ with name get (Codec toJson fd) (JsonMapping fields dec) =
 {-| Adds a static field to an object. The field will not be represented in your Elm model,
 but this exact field name and string value will be added to the written-out JSON file.
 -}
-static : String -> Codec a -> a -> JsonMapping b x -> JsonMapping b x
-static name (Codec enc _) value (JsonMapping fields dec) =
-    JsonMapping
+static : String -> Codec a -> a -> ObjectMapping encodesFrom decodesTo -> ObjectMapping encodesFrom decodesTo
+static name (Codec enc _) value (ObjectMapping fields dec) =
+    ObjectMapping
         (\x -> ( name, enc value ) :: fields x)
         dec
 
@@ -158,9 +163,9 @@ static name (Codec enc _) value (JsonMapping fields dec) =
 -- TODO: ? a function to hardcode a value in the JSON, but also pass it to Elm (maybe not necessary with static and a way to hardcode only into Elm?)
 
 
-union : List (VariantDecoder x) -> (x -> VariantEncoder) -> JsonMapping x x
+union : List (VariantDecoder a) -> (a -> VariantEncoder) -> ObjectMapping a a
 union dec enc =
-    JsonMapping
+    ObjectMapping
         (\x ->
             case enc x of
                 VariantEncoder tagName fields ->

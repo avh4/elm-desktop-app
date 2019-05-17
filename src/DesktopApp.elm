@@ -7,7 +7,7 @@ module DesktopApp exposing (program, Model, Msg)
 -}
 
 import Browser
-import DesktopApp.JsonMapping exposing (JsonMapping)
+import DesktopApp.JsonMapping exposing (ObjectMapping)
 import DesktopApp.Ports as Ports
 import DesktopApp.Testable as DesktopApp
 import Dict exposing (Dict)
@@ -56,7 +56,7 @@ program :
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
     , view : model -> Browser.Document msg
-    , persistence : Maybe (JsonMapping msg model)
+    , persistence : Maybe (ObjectMapping model msg)
     }
     -> Program () (Model model) (Msg msg)
 program config =

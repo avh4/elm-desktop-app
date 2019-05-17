@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Browser
 import DesktopApp
-import DesktopApp.JsonMapping as JsonMapping exposing (JsonMapping)
+import DesktopApp.JsonMapping as JsonMapping
 import Html exposing (Html)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
@@ -61,7 +61,7 @@ view model =
     }
 
 
-persistence : JsonMapping Msg Model
+persistence : JsonMapping.ObjectMapping Model Msg
 persistence =
     JsonMapping.object Loaded
         |> JsonMapping.with "count" .count JsonMapping.int
