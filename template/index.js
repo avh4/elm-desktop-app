@@ -3,7 +3,14 @@ const ipc = require('electron').ipcMain;
 const fs = require('fs');
 const path = require('path');
 
-function createWindow () {
+function getUserDataFilename() {
+  return new Promise(function(resolve) {
+    const filename = process.argv[2] || path.join(app.getPath("userData"), 'user-data.json');
+    resolve(filename);
+  });
+}
+
+function createWindow(userDataFilename) {
   let win = new BrowserWindow({
     width: 800,
     height: 600,
@@ -13,30 +20,33 @@ function createWindow () {
   });
 
   win.loadFile('index.html');
-}
-const userDataFilename = process.argv[2] || path.join(app.getPath("userData"), 'user-data.json');
-console.log("userData", userDataFilename);
 
-ipc.on('write-user-data', function (event, content) {
-  const filename = userDataFilename;
-  console.log(`Writing ${filename}: ${content.length} characters`);
-  fs.writeFile(filename, content, 'utf-8', function(err) {
+  ipc.on('write-user-data', function (event, content) {
+    const filename = userDataFilename;
+    console.log(`Writing ${filename}: ${content.length} characters`);
+    fs.writeFile(filename, content, 'utf-8', function(err) {
+    });
   });
-});
 
-ipc.on('load-user-data', function(event, _unit) {
-  const filepath = userDataFilename;
-  fs.readFile(filepath, 'utf-8', (err, content) => {
-    if (err) {
-      if (err.code === 'ENOENT') {
-        event.reply('user-data-loaded', null);
+  ipc.on('load-user-data', function(event, _unit) {
+    const filepath = userDataFilename;
+    fs.readFile(filepath, 'utf-8', (err, content) => {
+      if (err) {
+        if (err.code === 'ENOENT') {
+          event.reply('user-data-loaded', null);
+        } else {
+          throw err;
+        }
       } else {
-        throw err;
+        event.reply('user-data-loaded', content);
       }
-    } else {
-      event.reply('user-data-loaded', content);
-    }
+    });
+  });
+}
+
+app.on('ready', function() {
+  getUserDataFilename().then(function(filename) {
+    console.log(`Using file: ${filename}`);
+    createWindow(filename);
   });
 });
-
-app.on('ready', createWindow);
