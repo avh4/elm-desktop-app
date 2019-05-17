@@ -60,7 +60,7 @@ type ObjectMapping encodesFrom decodesTo
     = ObjectMapping (encodesFrom -> List ( String, Json.Value )) (Decoder decodesTo)
 
 
-{-| Representings how to encode `a` to and from JSON.
+{-| Represents how to encode `a` to and from JSON.
 -}
 type JsonMapping a
     = JsonMapping (a -> Json.Value) (Decoder a)
