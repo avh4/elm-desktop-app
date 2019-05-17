@@ -10,6 +10,7 @@ import DesktopApp.JsonMapping as JsonMapping exposing (ObjectMapping)
 import DesktopApp.Ports as Ports
 import Dict exposing (Dict)
 import Html exposing (Html)
+import Html.Attributes exposing (style)
 import Json.Decode exposing (Decoder)
 import Json.Encode as Json
 
@@ -20,7 +21,9 @@ type Effect
 
 
 type Model yourModel
-    = Model
+    = Loading
+    | Error String
+    | Model
         { appModel : yourModel
         , lastSaved : Maybe String
         }
@@ -29,15 +32,20 @@ type Model yourModel
 type Msg yourMsg
     = AppMsg yourMsg
     | UserDataLoaded (Maybe String)
+    | NoOp
 
 
-program :
+type alias Config model msg =
     { init : ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
     , view : model -> Browser.Document msg
     , persistence : Maybe (ObjectMapping model msg)
     }
+
+
+program :
+    Config model msg
     ->
         { init : () -> ( Model model, ( Cmd (Msg msg), List Effect ) )
         , subscriptions : Model model -> Sub (Msg msg)
@@ -47,70 +55,117 @@ program :
 program config =
     { init =
         \() ->
-            let
-                ( model, cmd ) =
-                    config.init
-            in
-            ( Model
-                { appModel = model
-                , lastSaved = Nothing
-                }
-            , ( cmd |> Cmd.map AppMsg
+            ( Loading
+            , ( Cmd.none
               , [ LoadUserData ]
               )
             )
     , update = update config
-    , subscriptions =
-        \(Model model) ->
-            Sub.batch
-                [ config.subscriptions model.appModel |> Sub.map AppMsg
-                , Ports.userDataLoaded UserDataLoaded
-                ]
-    , view =
-        \(Model model) ->
-            let
-                { title, body } =
-                    config.view model.appModel
-            in
-            { title = title
-            , body = body |> List.map (Html.map AppMsg)
-            }
+    , subscriptions = subscriptions config
+    , view = view config
     }
 
 
-update config msg (Model model) =
-    case msg of
-        AppMsg appMsg ->
-            let
-                ( newModel, cmd ) =
-                    config.update appMsg model.appModel
-            in
-            Model { model | appModel = newModel }
-                |> saveFiles config cmd
+subscriptions : Config model msg -> Model model -> Sub (Msg msg)
+subscriptions config model =
+    case model of
+        Loading ->
+            Ports.userDataLoaded UserDataLoaded
 
-        UserDataLoaded Nothing ->
-            -- The file didn't exist, so let's persist the initial model
-            Model model
-                |> saveFiles config Cmd.none
+        Error _ ->
+            Sub.none
 
-        UserDataLoaded (Just content) ->
-            case config.persistence of
-                Nothing ->
-                    -- We shouldn't have tried to a load a file since this app doesn't support persistence
-                    -- Technically this is an error condition, but it's safe to just ignore the data
-                    ( Model model, ( Cmd.none, [] ) )
-
-                Just jsonMapping ->
-                    case Json.Decode.decodeString (JsonMapping.decoder jsonMapping) content of
-                        Err err ->
-                            -- Log error?
-                            ( Model model, ( Cmd.none, [] ) )
-
-                        Ok value ->
-                            update config (AppMsg value) (Model model)
+        Model { appModel } ->
+            config.subscriptions appModel |> Sub.map AppMsg
 
 
-saveFiles config cmd (Model model) =
+update : Config model msg -> Msg msg -> Model model -> ( Model model, ( Cmd (Msg msg), List Effect ) )
+update config msg m =
+    let
+        ignore =
+            ( m, ( Cmd.none, [] ) )
+    in
+    case m of
+        Error _ ->
+            ignore
+
+        Loading ->
+            case msg of
+                NoOp ->
+                    ignore
+
+                AppMsg _ ->
+                    -- We shouldn't be getting app messages yet
+                    ignore
+
+                UserDataLoaded Nothing ->
+                    -- The file didn't exist, so let's persist the initial model
+                    let
+                        ( model, cmd ) =
+                            config.init
+                    in
+                    { appModel = model
+                    , lastSaved = Nothing
+                    }
+                        |> saveFiles config cmd
+
+                UserDataLoaded (Just content) ->
+                    case config.persistence of
+                        Nothing ->
+                            ( Error "Internal error: Please report this to https://github.com/avh4/elm-desktop-app/issues Received UserDataLoaded, but this app doesn't support persistence"
+                            , ( Cmd.none, [] )
+                            )
+
+                        Just jsonMapping ->
+                            case Json.Decode.decodeString (JsonMapping.decoder jsonMapping) content of
+                                Err err ->
+                                    ( Error ("Failed to open the file: " ++ Json.Decode.errorToString err)
+                                    , ( Cmd.none, [] )
+                                    )
+
+                                Ok appMsg ->
+                                    let
+                                        ( startingAppModel, initCmd ) =
+                                            config.init
+
+                                        startingModel =
+                                            Model
+                                                { appModel = startingAppModel
+                                                , lastSaved = Just content
+                                                }
+
+                                        ( finalModel, ( updateCmd, updateEffects ) ) =
+                                            update config (AppMsg appMsg) startingModel
+                                    in
+                                    ( finalModel
+                                    , ( Cmd.batch
+                                            [ initCmd |> Cmd.map AppMsg
+                                            , updateCmd
+                                            ]
+                                      , updateEffects
+                                      )
+                                    )
+
+        Model model ->
+            case msg of
+                NoOp ->
+                    ignore
+
+                AppMsg appMsg ->
+                    let
+                        ( newModel, cmd ) =
+                            config.update appMsg model.appModel
+                    in
+                    { model | appModel = newModel }
+                        |> saveFiles config cmd
+
+                UserDataLoaded _ ->
+                    -- We shouldn't be receiving data anymore, so ignore it
+                    -- TODO: log error?
+                    ignore
+
+
+saveFiles config cmd model =
     case config.persistence of
         Nothing ->
             ( Model model
@@ -142,3 +197,48 @@ saveFiles config cmd (Model model) =
               , writeEffects
               )
             )
+
+
+view : Config model msg -> Model model -> Browser.Document (Msg msg)
+view config m =
+    case m of
+        Loading ->
+            let
+                appModel =
+                    Tuple.first config.init
+
+                { title, body } =
+                    config.view appModel
+            in
+            { title = title
+            , body =
+                [ Html.div
+                    [ style "width" "100%"
+                    , style "background" "#ece3e7"
+                    , style "min-height" "100vh"
+                    ]
+                    [ Html.div
+                        [ style "opacity" "0.7"
+                        , style "pointer-events" "none"
+                        , style "user-select" "none"
+                        , style "mix-blend-mode" "multiply"
+                        ]
+                        body
+                        |> Html.map (always NoOp)
+                    ]
+                ]
+            }
+
+        Error message ->
+            { title = "✖_✖"
+            , body = [ Html.text message ]
+            }
+
+        Model model ->
+            let
+                { title, body } =
+                    config.view model.appModel
+            in
+            { title = title
+            , body = body |> List.map (Html.map AppMsg)
+            }
