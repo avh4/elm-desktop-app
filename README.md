@@ -37,7 +37,7 @@ Edit the generated `src/Main.elm` to implement your app and define how to persis
 import DesktopApp
 import DesktopApp.JsonMapping as JsonMapping
 
-main : Program () (DesktopApp.Model Model) (DesktopApp.Msg Msg)
+main : DesktopApp.Program Model Msg
 main =
     DesktopApp.program
         { init = ( init, Cmd.none )

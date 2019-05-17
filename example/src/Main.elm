@@ -12,7 +12,7 @@ import Json.Encode as Json
 import Time
 
 
-main : Program () (DesktopApp.Model Model) (DesktopApp.Msg Msg)
+main : DesktopApp.Program Model Msg
 main =
     DesktopApp.program
         { init = ( init, Cmd.none )

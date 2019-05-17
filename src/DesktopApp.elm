@@ -1,8 +1,8 @@
-module DesktopApp exposing (program, Model, Msg)
+module DesktopApp exposing (program, Program, Model, Msg)
 
 {-|
 
-@docs program, Model, Msg
+@docs program, Program, Model, Msg
 
 -}
 
@@ -16,7 +16,7 @@ import Json.Decode exposing (Decoder)
 import Json.Encode as Json
 
 
-{-| This is the Model type for your Elm program when using `DesktopApp.program`
+{-| This is the type for your Elm program when using `DesktopApp.program`
 
 For example:
 
@@ -26,19 +26,29 @@ For example:
 
     type alias Model = { ... }
     type Msg = ...
-    type alias Flags = ...
 
-    main : Program Flags (DesktopApp.Model Model) (DesktopApp.Msg Msg)
+    main : DesktopApp.Program Model Msg
     main =
         DesktopApp.program { ... }
+
+-}
+type alias Program model msg =
+    Platform.Program () (Model model) (Msg msg)
+
+
+{-| This is the Model type for your Elm program when using [`DesktopApp.program`](#program).
+
+Normally you won't need to refer to this directly -- use [`Program`](#Program) instead.
 
 -}
 type alias Model yourModel =
     DesktopApp.Model yourModel
 
 
-{-| This is the Msg type for your Elm program when using `DesktopApp.program`.
-(See the example for [`Model`](#Model).)
+{-| This is the Msg type for your Elm program when using [`DesktopApp.program`](#program).
+
+Normally you won't need to refer to this directly -- use [`Program`](#Program) instead.
+
 -}
 type alias Msg yourMsg =
     DesktopApp.Msg yourMsg
@@ -58,7 +68,7 @@ program :
     , view : model -> Browser.Document msg
     , persistence : Maybe (ObjectMapping model msg)
     }
-    -> Program () (Model model) (Msg msg)
+    -> Program model msg
 program config =
     let
         p =

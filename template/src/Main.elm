@@ -9,7 +9,7 @@ import Html.Events exposing (onClick)
 import Json.Encode as Json
 
 
-main : Program () (DesktopApp.Model Model) (DesktopApp.Msg Msg)
+main : DesktopApp.Program Model Msg
 main =
     DesktopApp.program
         { init = ( init, Cmd.none )
