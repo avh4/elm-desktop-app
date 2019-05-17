@@ -57,8 +57,8 @@ type alias Model =
 persistence : JsonMapping Msg Model
 persistence =
     JsonMapping.object Loaded
-        |> JsonMapping.withString "name" .name
-        |> JsonMapping.withInt "count" .count
+        |> JsonMapping.with "name" .name JsonMapping.string
+        |> JsonMapping.with "count" .count JsonMapping.int
 ```
 
 Use the command line tool to run your app:

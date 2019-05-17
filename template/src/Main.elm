@@ -64,4 +64,4 @@ view model =
 persistence : JsonMapping Msg Model
 persistence =
     JsonMapping.object Loaded
-        |> JsonMapping.withInt "count" .count
+        |> JsonMapping.with "count" .count JsonMapping.int

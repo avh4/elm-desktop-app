@@ -39,7 +39,7 @@ Given('an existing app', function () {
         Inc -> (model+1, Cmd.none)\n\
         Loaded i -> (i, Cmd.none)";
   this.Main.main.view = "\\model -> { title = \"\", body = [ Html.button [onClick Inc] [Html.text \"+\"] ] }";
-  this.Main.main.persistence = "Just (JsonMapping.object Loaded |> JsonMapping.withInt \"count\" identity)";
+  this.Main.main.persistence = "Just (JsonMapping.object Loaded |> JsonMapping.with \"count\" identity JsonMapping.int)";
   return this.writeMain();
 });
 

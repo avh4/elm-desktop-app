@@ -67,7 +67,7 @@ start =
                         }
                 , persistence =
                     JsonMapping.object Loaded
-                        |> JsonMapping.withInt "count" .count
+                        |> JsonMapping.with "count" .count JsonMapping.int
                         |> Just
                 }
     in
