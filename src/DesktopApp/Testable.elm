@@ -125,7 +125,7 @@ saveFiles config cmd (Model model) =
                 ( newLastSaved, writeEffects ) =
                     let
                         newContent =
-                            JsonMapping.encode jsonMapping model.appModel
+                            JsonMapping.encodeString jsonMapping model.appModel
                     in
                     if model.lastSaved == Just newContent then
                         -- This file hasn't changed, so do nothing

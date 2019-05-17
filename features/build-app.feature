@@ -9,7 +9,7 @@ Scenario: simple app that writes data files
   When I create a new app
   And I make change my program's persistence to
     """
-    Just (JsonMapping.object () |> JsonMapping.static "key" JsonMapping.string "value")
+    Just (JsonMapping.object () |> JsonMapping.static "key" "value" JsonMapping.string)
     """
   And I run the app with "test-data.json"
   Then the JSON file "test-data.json" is

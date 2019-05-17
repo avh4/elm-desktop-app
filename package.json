@@ -4,7 +4,7 @@
   "description": "the simplest way to write desktop applications in Elm",
   "scripts": {
     "test": "elm-test && ./$npm_package_bin_elm_desktop_app build example && cucumber-js && npm run-script check",
-    "check": "elm make --docs=documentation.json && elm-format --validate example src",
+    "check": "elm make --docs=docs.json && elm-format --validate example src",
     "start": "./$npm_package_bin_elm_desktop_app run example"
   },
   "repository": {

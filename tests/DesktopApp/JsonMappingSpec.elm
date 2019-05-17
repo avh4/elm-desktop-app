@@ -11,7 +11,7 @@ check name mapping elmValue jsonString =
     describe name
         [ test "encodes" <|
             \() ->
-                JsonMapping.encode mapping elmValue
+                JsonMapping.encodeString mapping elmValue
                     |> Expect.equal jsonString
         , test "decodes" <|
             \() ->
@@ -64,7 +64,7 @@ all =
             """{"a":true}"""
         , check "adding static data"
             (object Single
-                |> static "version" int 1
+                |> static "version" 1 int
                 |> with "a" .a string
             )
             { a = "submitted" }
