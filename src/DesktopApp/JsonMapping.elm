@@ -1,6 +1,6 @@
 module DesktopApp.JsonMapping exposing
     ( ObjectMapping
-    , object, with, static, mapObjectDecoding, mapObjectEncoding
+    , object, with, static, mapObjectDecoding, mapObjectEncoding, customObject
     , encodeString, encodeValue, decoder
     , JsonMapping, int, string, bool
     , maybe, list, custom, fromObjectMapping, map
@@ -15,7 +15,7 @@ module DesktopApp.JsonMapping exposing
 # Mapping Elm values to JSON objects
 
 @docs ObjectMapping
-@docs object, with, static, mapObjectDecoding, mapObjectEncoding
+@docs object, with, static, mapObjectDecoding, mapObjectEncoding, customObject
 
 
 ## Using `ObjectMapping`s
@@ -87,6 +87,14 @@ which can be used like this:
 object : decodesTo -> ObjectMapping encodesFrom decodesTo
 object a =
     ObjectMapping (always []) (Json.Decode.succeed a)
+
+
+{-| If you have some data type for which the [`object`](#object) and [`with`](#with) API doesn't meet your needs,
+you can use `customObject` to create an `ObjectMapping` for any type that you can write an encoder and decoder for.
+-}
+customObject : (encodesFrom -> List ( String, Json.Value )) -> Decoder decodesTo -> ObjectMapping encodesFrom decodesTo
+customObject =
+    ObjectMapping
 
 
 {-| Transforms the type that an `ObjectMapping` decodes.
