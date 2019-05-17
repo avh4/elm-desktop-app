@@ -1,8 +1,10 @@
 Feature: Building an Elm electron app
 
+
 Scenario: the init app compiles
   When I create a new app
   Then I can successfully build my app
+  And my app has a unique id
 
 
 Scenario: simple app that writes data files

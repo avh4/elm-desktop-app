@@ -26,7 +26,7 @@ After(function() {
 });
 
 function initProject(world) {
-  world.runElmDesktopApp(["init", ".", world.appId]);
+  world.runElmDesktopApp(["init"]);
 }
 
 Given('an existing app', function () {
@@ -71,6 +71,13 @@ When('I run the app with {string}', function (dataFilename) {
 
 Then('I can successfully build my app', function () {
   this.runElmDesktopApp(["build"]);
+});
+
+Then('my app has a unique id', function() {
+  const elmJson = JSON.parse(fs.readFileSync('elm.json'));
+  const appId = elmJson['elm-desktop-app']['app-id'];
+  expect(appId).toBeDefined();
+  expect(appId.length).toBeGreaterThan(5);
 });
 
 When('click {string}', function (label) {

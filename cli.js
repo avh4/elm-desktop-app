@@ -23,11 +23,13 @@ function main(args) {
     break;
 
   case "init":
+    const mngen = require("mngen");
+
     shell.exec("yes | elm init");
     shell.exec("yes | elm install elm/json");
     const elmJson = JSON.parse(fs.readFileSync(path.join(PROJECT_DIR, "elm.json")));
     elmJson['elm-desktop-app'] = {
-      "app-id": args[2]
+      "app-id": args[2] || `net.avh4.elm-desktop-app.replace-this-with-your-own-app-id.${mngen.word(3)}`
     };
     fs.writeFileSync(path.join(PROJECT_DIR, "elm.json"), JSON.stringify(elmJson, null, 4));
 

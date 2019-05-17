@@ -1,7 +1,6 @@
 ## first release
 
 - Publish Elm package
-- init requires an app-id (with wizard input?) (mngen)
 
 
 ## future
