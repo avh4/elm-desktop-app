@@ -1,6 +1,6 @@
 module DesktopApp.JsonMappingSpec exposing (all)
 
-import DesktopApp.JsonMapping as JsonMapping exposing (ObjectMapping, bool, int, list, maybe, object, static, string, tag0, tag1, tag2, union, with)
+import DesktopApp.JsonMapping as JsonMapping exposing (ObjectMapping, bool, customType, int, list, maybe, object, static, string, variant0, variant1, variant2, with)
 import Expect
 import Json.Decode
 import Test exposing (..)
@@ -31,7 +31,7 @@ type alias Double a b =
     }
 
 
-type Union
+type CustomType
     = Zero
     | One Int
     | Two String Bool
@@ -92,21 +92,21 @@ all =
         , describe "custom type" <|
             let
                 zero =
-                    tag0 "Zero" Zero
+                    variant0 "Zero" Zero
 
                 one =
-                    tag1 "One"
+                    variant1 "One"
                         One
                         ( "a", int )
 
                 two =
-                    tag2 "Two"
+                    variant2 "Two"
                         Two
                         ( "a", string )
                         ( "b", bool )
 
                 mapping =
-                    union
+                    customType
                         [ zero.decode, one.decode, two.decode ]
                         (\x ->
                             case x of

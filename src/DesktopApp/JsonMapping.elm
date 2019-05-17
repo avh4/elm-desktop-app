@@ -4,7 +4,7 @@ module DesktopApp.JsonMapping exposing
     , object, with, static, mapObject
     , JsonMapping, int, string, bool
     , maybe, list, custom, fromObjectMapping, map
-    , customType, Variant, VariantEncoder, VariantDecoder, tag0, tag1, tag2
+    , customType, variant0, variant1, variant2, variant3, variant4, variant5, Variant, VariantEncoder, VariantDecoder
     )
 
 {-|
@@ -15,7 +15,7 @@ module DesktopApp.JsonMapping exposing
 @docs object, with, static, mapObject
 @docs JsonMapping, int, string, bool
 @docs maybe, list, custom, fromObjectMapping, map
-@docs customType, Variant, VariantEncoder, VariantDecoder, tag0, tag1, tag2
+@docs customType, variant0, variant1, variant2, variant3, variant4, variant5, Variant, VariantEncoder, VariantDecoder
 
 -}
 
@@ -220,7 +220,7 @@ static name (JsonMapping enc _) value (ObjectMapping fields dec) =
 
 {-| Maps an Elm [custom type](https://guide.elm-lang.org/types/custom_types.html) to and from a JSON object.
 
-`VariantDecoder`s and `VariantEncoder`s are created using the [`tagN`](#tag0) functions (see the example here).
+`VariantDecoder`s and `VariantEncoder`s are created using the [`variant*`](#variant0) functions (see the example here).
 
 This function returns an ObjectMapping instead of a JsonMapping so that it is possible to have a custom type as the top-level of your persisted data when using `DesktopApp.program`.
 If you need a JsonMapping, you can use this with [`fromObjectMapping`](#fromObjectMapping)
@@ -235,16 +235,16 @@ If you need a JsonMapping, you can use this with [`fromObjectMapping`](#fromObje
     myTypeMapping =
         let
             notAuthorized =
-                tag0 "NotAuthorized" NotAuthorized
+                variant0 "NotAuthorized" NotAuthorized
 
             guest =
-                tag2 "Guest"
+                variant2 "Guest"
                     Guest
                     ( "is_vip", bool )
                     ( "name", string )
 
             employee =
-                tag1 "Employee"
+                variant1 "Employee"
                     Employee
                     ( "employee_id", int )
         in
@@ -334,8 +334,13 @@ type VariantEncoder
     = VariantEncoder String (List ( String, Json.Value ))
 
 
-tag0 : String -> decodesTo -> Variant decodesTo VariantEncoder
-tag0 name f =
+{-| Creates a VarientEncoder and VariantDecoder for an Elm custom type variant that takes no parameters.
+
+See [`customType`](#customType) for an example of how to use the `variant*` functions.
+
+-}
+variant0 : String -> decodesTo -> Variant decodesTo VariantEncoder
+variant0 name f =
     { decode =
         VariantDecoder
             { tag = name
@@ -349,8 +354,17 @@ tag0 name f =
     }
 
 
-tag1 : String -> (a -> decodesTo) -> ( String, JsonMapping a ) -> Variant decodesTo (a -> VariantEncoder)
-tag1 name f ( an, JsonMapping ac ad ) =
+{-| Creates a VarientEncoder and VariantDecoder for an Elm custom type variant that takes one parameter.
+
+See [`customType`](#customType) for an example of how to use the `variant*` functions.
+
+-}
+variant1 :
+    String
+    -> (a -> decodesTo)
+    -> ( String, JsonMapping a )
+    -> Variant decodesTo (a -> VariantEncoder)
+variant1 name f ( an, JsonMapping ac ad ) =
     { decode =
         VariantDecoder
             { tag = name
@@ -367,8 +381,18 @@ tag1 name f ( an, JsonMapping ac ad ) =
     }
 
 
-tag2 : String -> (a -> b -> decodesTo) -> ( String, JsonMapping a ) -> ( String, JsonMapping b ) -> Variant decodesTo (a -> b -> VariantEncoder)
-tag2 name f ( an, JsonMapping ac ad ) ( bn, JsonMapping bc bd ) =
+{-| Creates a VarientEncoder and VariantDecoder for an Elm custom type variant that takes two parameters.
+
+See [`customType`](#customType) for an example of how to use the `variant*` functions.
+
+-}
+variant2 :
+    String
+    -> (a -> b -> decodesTo)
+    -> ( String, JsonMapping a )
+    -> ( String, JsonMapping b )
+    -> Variant decodesTo (a -> b -> VariantEncoder)
+variant2 name f ( an, JsonMapping ac ad ) ( bn, JsonMapping bc bd ) =
     { decode =
         VariantDecoder
             { tag = name
@@ -387,5 +411,109 @@ tag2 name f ( an, JsonMapping ac ad ) ( bn, JsonMapping bc bd ) =
     }
 
 
+{-| Creates a VarientEncoder and VariantDecoder for an Elm custom type variant that takes three parameters.
 
--- TODO: tag3, tag4, tag5
+See [`customType`](#customType) for an example of how to use the `variant*` functions.
+
+-}
+variant3 :
+    String
+    -> (a -> b -> c -> decodesTo)
+    -> ( String, JsonMapping a )
+    -> ( String, JsonMapping b )
+    -> ( String, JsonMapping c )
+    -> Variant decodesTo (a -> b -> c -> VariantEncoder)
+variant3 name f ( an, JsonMapping ac ad ) ( bn, JsonMapping bc bd ) ( cn, JsonMapping cc cd ) =
+    { decode =
+        VariantDecoder
+            { tag = name
+            , decode =
+                Json.Decode.map3 f
+                    (Json.Decode.field an ad)
+                    (Json.Decode.field bn bd)
+                    (Json.Decode.field cn cd)
+            }
+    , encode =
+        \a b c ->
+            VariantEncoder
+                name
+                [ ( an, ac a )
+                , ( bn, bc b )
+                , ( cn, cc c )
+                ]
+    }
+
+
+{-| Creates a VarientEncoder and VariantDecoder for an Elm custom type variant that takes four parameters.
+
+See [`customType`](#customType) for an example of how to use the `variant*` functions.
+
+-}
+variant4 :
+    String
+    -> (a -> b -> c -> d -> decodesTo)
+    -> ( String, JsonMapping a )
+    -> ( String, JsonMapping b )
+    -> ( String, JsonMapping c )
+    -> ( String, JsonMapping d )
+    -> Variant decodesTo (a -> b -> c -> d -> VariantEncoder)
+variant4 name f ( an, JsonMapping ac ad ) ( bn, JsonMapping bc bd ) ( cn, JsonMapping cc cd ) ( dn, JsonMapping dc dd ) =
+    { decode =
+        VariantDecoder
+            { tag = name
+            , decode =
+                Json.Decode.map4 f
+                    (Json.Decode.field an ad)
+                    (Json.Decode.field bn bd)
+                    (Json.Decode.field cn cd)
+                    (Json.Decode.field dn dd)
+            }
+    , encode =
+        \a b c d ->
+            VariantEncoder
+                name
+                [ ( an, ac a )
+                , ( bn, bc b )
+                , ( cn, cc c )
+                , ( dn, dc d )
+                ]
+    }
+
+
+{-| Creates a VarientEncoder and VariantDecoder for an Elm custom type variant that takes five parameters.
+
+See [`customType`](#customType) for an example of how to use the `variant*` functions.
+
+-}
+variant5 :
+    String
+    -> (a -> b -> c -> d -> e -> decodesTo)
+    -> ( String, JsonMapping a )
+    -> ( String, JsonMapping b )
+    -> ( String, JsonMapping c )
+    -> ( String, JsonMapping d )
+    -> ( String, JsonMapping e )
+    -> Variant decodesTo (a -> b -> c -> d -> e -> VariantEncoder)
+variant5 name f ( an, JsonMapping ac ad ) ( bn, JsonMapping bc bd ) ( cn, JsonMapping cc cd ) ( dn, JsonMapping dc dd ) ( en, JsonMapping ec ed ) =
+    { decode =
+        VariantDecoder
+            { tag = name
+            , decode =
+                Json.Decode.map5 f
+                    (Json.Decode.field an ad)
+                    (Json.Decode.field bn bd)
+                    (Json.Decode.field cn cd)
+                    (Json.Decode.field dn dd)
+                    (Json.Decode.field en ed)
+            }
+    , encode =
+        \a b c d e ->
+            VariantEncoder
+                name
+                [ ( an, ac a )
+                , ( bn, bc b )
+                , ( cn, cc c )
+                , ( dn, dc d )
+                , ( en, ec e )
+                ]
+    }
