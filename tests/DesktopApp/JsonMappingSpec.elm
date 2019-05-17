@@ -1,6 +1,6 @@
 module DesktopApp.JsonMappingSpec exposing (all)
 
-import DesktopApp.JsonMapping as JsonMapping exposing (JsonMapping, bool, int, list, maybe, object, static, string, tag, union, with, withValue, withX)
+import DesktopApp.JsonMapping as JsonMapping exposing (JsonMapping, bool, int, list, maybe, object, static, string, tag0, tag1, tag2, union, with)
 import Expect
 import Json.Decode
 import Test exposing (..)
@@ -91,34 +91,33 @@ all =
             """{"a":["1","2","3"]}"""
         , describe "custom type" <|
             let
+                zero =
+                    tag0 "Zero" Zero
+
+                one =
+                    tag1 "One"
+                        One
+                        ( "a", int )
+
+                two =
+                    tag2 "Two"
+                        Two
+                        ( "a", string )
+                        ( "b", bool )
+
                 mapping =
                     union
-                        [ ( "Zero"
-                          , object Zero
-                          )
-                        , ( "One"
-                          , object One
-                                |> withX "a" int
-                          )
-                        , ( "Two"
-                          , object Two
-                                |> withX "a" string
-                                |> withX "b" bool
-                          )
-                        ]
+                        [ zero.decode, one.decode, two.decode ]
                         (\x ->
                             case x of
                                 Zero ->
-                                    tag "Zero" Zero
+                                    zero.encode
 
                                 One a ->
-                                    tag "One" One
-                                        |> withValue "a" a int
+                                    one.encode a
 
                                 Two a b ->
-                                    tag "Two" Two
-                                        |> withValue "a" a string
-                                        |> withValue "b" b bool
+                                    two.encode a b
                         )
             in
             [ check "variant with no args"

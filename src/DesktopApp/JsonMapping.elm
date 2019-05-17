@@ -4,7 +4,7 @@ module DesktopApp.JsonMapping exposing
     , object, with, static, map
     , Codec, int, string, bool
     , maybe, list, custom, fromMapping, mapCodec
-    , union, tag, withValue, withX
+    , union, tag0, tag1, tag2
     )
 
 {-|
@@ -15,7 +15,7 @@ module DesktopApp.JsonMapping exposing
 @docs object, with, static, map
 @docs Codec, int, string, bool
 @docs maybe, list, custom, fromMapping, mapCodec
-@docs union, tag, withValue, withX
+@docs union, tag0, tag1, tag2
 
 -}
 
@@ -153,13 +153,18 @@ static name (Codec enc _) value (JsonMapping fields dec) =
         dec
 
 
-union : List ( String, JsonMapping x x ) -> (x -> JsonMapping x x) -> JsonMapping x x
+
+-- TODO: a function to hardcode a parameter into the Elm value which is not in the JSON
+-- TODO: ? a function to hardcode a value in the JSON, but also pass it to Elm (maybe not necessary with static and a way to hardcode only into Elm?)
+
+
+union : List (VariantDecoder x) -> (x -> VariantEncoder) -> JsonMapping x x
 union dec enc =
     JsonMapping
         (\x ->
             case enc x of
-                JsonMapping f _ ->
-                    f x
+                VariantEncoder tagName fields ->
+                    List.reverse fields ++ [ ( "$", Json.string tagName ) ]
         )
         (Json.Decode.field "$" Json.Decode.string
             |> Json.Decode.andThen
@@ -167,6 +172,7 @@ union dec enc =
                     case
                         -- TODO: this is probably faster to just recurse through the list instead of transforming into a Dict
                         dec
+                            |> List.map (\(VariantDecoder p) -> ( p.tag, p.decode ))
                             |> Dict.fromList
                             |> Dict.get t
                     of
@@ -174,34 +180,82 @@ union dec enc =
                             Json.Decode.fail <|
                                 String.concat
                                     [ "Unknown tag: expected one of ["
-                                    , String.join ", " (List.map Tuple.first dec)
+                                    , String.join ", " (List.map (\(VariantDecoder p) -> p.tag) dec)
                                     , "], but got: "
                                     , t
                                     ]
 
-                        Just (JsonMapping _ d) ->
+                        Just d ->
                             d
                 )
         )
 
 
-{-| TODO: rename this
--}
-withX : String -> Codec a -> JsonMapping (a -> b) x -> JsonMapping b x
-withX name (Codec toJson fd) (JsonMapping fields dec) =
-    JsonMapping fields (Json.Decode.map2 (\a f -> f a) (Json.Decode.field name fd) dec)
+type alias Variant x f =
+    { decode : VariantDecoder x
+    , encode : f
+    }
 
 
-tag : String -> x -> JsonMapping x b
-tag name f =
-    object f
-        |> static "$" string name
+type VariantDecoder x
+    = VariantDecoder
+        { tag : String
+        , decode : Decoder x
+        }
 
 
-{-| TODO: this is like `static`, but it does consume a parameter of the decode-to type
--}
-withValue : String -> a -> Codec a -> JsonMapping (a -> b) x -> JsonMapping b x
-withValue name value (Codec enc fd) (JsonMapping fields dec) =
-    JsonMapping
-        (\x -> ( name, enc value ) :: fields x)
-        (Json.Decode.map2 (\a f -> f a) (Json.Decode.field name fd) dec)
+type VariantEncoder
+    = VariantEncoder String (List ( String, Json.Value ))
+
+
+tag0 : String -> x -> Variant x VariantEncoder
+tag0 name f =
+    { decode =
+        VariantDecoder
+            { tag = name
+            , decode =
+                Json.Decode.succeed f
+            }
+    , encode =
+        VariantEncoder
+            name
+            []
+    }
+
+
+tag1 : String -> (a -> x) -> ( String, Codec a ) -> Variant x (a -> VariantEncoder)
+tag1 name f ( an, Codec ac ad ) =
+    { decode =
+        VariantDecoder
+            { tag = name
+            , decode =
+                Json.Decode.map f
+                    (Json.Decode.field an ad)
+            }
+    , encode =
+        \a ->
+            VariantEncoder
+                name
+                [ ( an, ac a )
+                ]
+    }
+
+
+tag2 : String -> (a -> b -> x) -> ( String, Codec a ) -> ( String, Codec b ) -> Variant x (a -> b -> VariantEncoder)
+tag2 name f ( an, Codec ac ad ) ( bn, Codec bc bd ) =
+    { decode =
+        VariantDecoder
+            { tag = name
+            , decode =
+                Json.Decode.map2 f
+                    (Json.Decode.field an ad)
+                    (Json.Decode.field bn bd)
+            }
+    , encode =
+        \a b ->
+            VariantEncoder
+                name
+                [ ( an, ac a )
+                , ( bn, bc b )
+                ]
+    }
