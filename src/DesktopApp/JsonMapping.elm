@@ -1,10 +1,10 @@
 module DesktopApp.JsonMapping exposing
     ( ObjectMapping
     , encode, decoder
-    , object, with, static, map
-    , Codec, int, string, bool
-    , maybe, list, custom, fromMapping, mapCodec
-    , union, tag0, tag1, tag2
+    , object, with, static, mapObject
+    , JsonMapping, int, string, bool
+    , maybe, list, custom, fromObjectMapping, map
+    , customType, Variant, VariantEncoder, VariantDecoder, tag0, tag1, tag2
     )
 
 {-|
@@ -12,10 +12,10 @@ module DesktopApp.JsonMapping exposing
 @docs ObjectMapping
 @docs encode, decoder
 
-@docs object, with, static, map
-@docs Codec, int, string, bool
-@docs maybe, list, custom, fromMapping, mapCodec
-@docs union, tag0, tag1, tag2
+@docs object, with, static, mapObject
+@docs JsonMapping, int, string, bool
+@docs maybe, list, custom, fromObjectMapping, map
+@docs customType, Variant, VariantEncoder, VariantDecoder, tag0, tag1, tag2
 
 -}
 
@@ -24,20 +24,26 @@ import Json.Decode exposing (Decoder)
 import Json.Encode as Json
 
 
-{-| Represents both how to encode `b` into JSON, and decode `a` from JSON.
+{-| Represents both how to encode `b` into JSON, and decode `a` from a JSON object.
+This is similar to `JsonMapping`, but it allows a pipeline-style API for building up mappings
+(see [`object`](#object), [`with`](#with), [`static`](#static)).
 
-Notably, when `a` and `b` are the same it specifies a two-way mapping to and from JSON
-(which can then be used with [`jsonFile`](#jsonFile)).
+Notably this is used with `DesktopApp.program` to specify how to save and load data.
+When used in that way, the `encodesFrom` type will be your program's model,
+and the `decodesTo` type will be your program's msg (which will be produced when data is loaded).
+
+Also of note: when `a` and `b` are the same it specifies a two-way mapping to and from JSON
+(and can then be turned into a `JsonMapping` with [`fromObjectMapping`](#fromObjectMapping)).
 
 -}
 type ObjectMapping encodesFrom decodesTo
     = ObjectMapping (encodesFrom -> List ( String, Json.Value )) (Decoder decodesTo)
 
 
-{-| TODO: rename this to JsonMapping, and rename current JsonMapping to "ObjectMapping"
+{-| Representings how to encode `a` to and from JSON.
 -}
-type Codec a
-    = Codec (a -> Json.Value) (Decoder a)
+type JsonMapping a
+    = JsonMapping (a -> Json.Value) (Decoder a)
 
 
 {-| Creates a trivial `ObjectMapping`.
@@ -64,9 +70,12 @@ object a =
 
 
 {-| Transforms the type that a ObjectMapping decodes.
+
+TODO: should also take `(b -> a)` ?
+
 -}
-map : (a -> b) -> ObjectMapping encodesFrom a -> ObjectMapping encodesFrom b
-map f (ObjectMapping fields decode) =
+mapObject : (a -> b) -> ObjectMapping encodesFrom a -> ObjectMapping encodesFrom b
+mapObject f (ObjectMapping fields decode) =
     ObjectMapping fields (Json.Decode.map f decode)
 
 
@@ -92,46 +101,92 @@ encodeValue (ObjectMapping fields _) model =
         |> Json.object
 
 
-int : Codec Int
+{-| Maps an Elm `Int` to and from JSON.
+-}
+int : JsonMapping Int
 int =
-    Codec Json.int Json.Decode.int
+    JsonMapping Json.int Json.Decode.int
 
 
-string : Codec String
+{-| Maps an Elm `String` to and from JSON.
+-}
+string : JsonMapping String
 string =
-    Codec Json.string Json.Decode.string
+    JsonMapping Json.string Json.Decode.string
 
 
-bool : Codec Bool
+{-| Maps an Elm `Bool` to and from JSON.
+-}
+bool : JsonMapping Bool
 bool =
-    Codec Json.bool Json.Decode.bool
+    JsonMapping Json.bool Json.Decode.bool
 
 
-maybe : Codec a -> Codec (Maybe a)
-maybe (Codec enc dec) =
-    Codec
+{-| Maps an Elm `Maybe` to and from JSON.
+`Nothing` will map to `null`,
+and `Just a` will use the given mapping for `a`.
+
+    import DesktopApp.JsonMapping exposing (maybe, int, encode, decoder)
+    import Json.Decode exposing (decodeString)
+
+    encode (maybe int) (Just 7)  --> "7"
+    encode (maybe int) Nothing  --> "null"
+
+    decodeString (decoder (maybe string)) "\"hi\""  --> Just "hi"
+    decodeString (decoder (maybe string)) "null"  --> Nothing
+
+-}
+maybe : JsonMapping a -> JsonMapping (Maybe a)
+maybe (JsonMapping enc dec) =
+    JsonMapping
         (Maybe.map enc >> Maybe.withDefault Json.null)
         (Json.Decode.nullable dec)
 
 
-list : Codec a -> Codec (List a)
-list (Codec enc dec) =
-    Codec (Json.list enc) (Json.Decode.list dec)
+{-| Maps an Elm `List` to and from a JSON array.
+-}
+list : JsonMapping a -> JsonMapping (List a)
+list (JsonMapping enc dec) =
+    JsonMapping (Json.list enc) (Json.Decode.list dec)
 
 
-custom : (a -> Json.Value) -> Decoder a -> Codec a
+{-| Creates a JsonMapping that uses the given Elm JSON encoder and decoder
+-}
+custom : (a -> Json.Value) -> Decoder a -> JsonMapping a
 custom enc dec =
-    Codec enc dec
+    JsonMapping enc dec
 
 
-mapCodec : (b -> a) -> (a -> b) -> Codec a -> Codec b
-mapCodec en de (Codec enc dec) =
-    Codec (en >> enc) (Json.Decode.map de dec)
+{-| Transforms a JsonMapping. This requires functions for transforming in each direction
+so that both encoding and decoding can be handled.
+-}
+map : (b -> a) -> (a -> b) -> JsonMapping a -> JsonMapping b
+map en de (JsonMapping enc dec) =
+    JsonMapping (en >> enc) (Json.Decode.map de dec)
 
 
-fromMapping : ObjectMapping a a -> Codec a
-fromMapping mapping =
-    Codec (encodeValue mapping) (decoder mapping)
+{-| Creates a JsonMapping from an ObjectMapping
+
+This allows you to create JsonMappings that can then be used as nested fields within other ObjectMappings.
+
+    import DesktopApp.JsonMapping exposing (fromObjectMapping, int, object, string, with)
+
+    type alias MyData =
+        { name : String
+        , admin : Bool
+        }
+
+    myDataMapping : JsonMapping MyData
+    myDataMapping =
+        object MyData
+            |> with "name" .name string
+            |> with "admin" .admin bool
+            |> fromObjectMapping
+
+-}
+fromObjectMapping : ObjectMapping a a -> JsonMapping a
+fromObjectMapping mapping =
+    JsonMapping (encodeValue mapping) (decoder mapping)
 
 
 {-| Adds a field to an object. It will be represented in both your Elm model and in the JSON.
@@ -139,10 +194,10 @@ fromMapping mapping =
 with :
     String
     -> (encodesFrom -> a)
-    -> Codec a
+    -> JsonMapping a
     -> ObjectMapping encodesFrom (a -> decodesTo)
     -> ObjectMapping encodesFrom decodesTo
-with name get (Codec toJson fd) (ObjectMapping fields dec) =
+with name get (JsonMapping toJson fd) (ObjectMapping fields dec) =
     ObjectMapping
         (\x -> ( name, get x |> toJson ) :: fields x)
         (Json.Decode.map2 (\a f -> f a) (Json.Decode.field name fd) dec)
@@ -151,8 +206,8 @@ with name get (Codec toJson fd) (ObjectMapping fields dec) =
 {-| Adds a static field to an object. The field will not be represented in your Elm model,
 but this exact field name and string value will be added to the written-out JSON file.
 -}
-static : String -> Codec a -> a -> ObjectMapping encodesFrom decodesTo -> ObjectMapping encodesFrom decodesTo
-static name (Codec enc _) value (ObjectMapping fields dec) =
+static : String -> JsonMapping a -> a -> ObjectMapping encodesFrom decodesTo -> ObjectMapping encodesFrom decodesTo
+static name (JsonMapping enc _) value (ObjectMapping fields dec) =
     ObjectMapping
         (\x -> ( name, enc value ) :: fields x)
         dec
@@ -163,8 +218,57 @@ static name (Codec enc _) value (ObjectMapping fields dec) =
 -- TODO: ? a function to hardcode a value in the JSON, but also pass it to Elm (maybe not necessary with static and a way to hardcode only into Elm?)
 
 
-union : List (VariantDecoder a) -> (a -> VariantEncoder) -> ObjectMapping a a
-union dec enc =
+{-| Maps an Elm [custom type](https://guide.elm-lang.org/types/custom_types.html) to and from a JSON object.
+
+`VariantDecoder`s and `VariantEncoder`s are created using the [`tagN`](#tag0) functions (see the example here).
+
+This function returns an ObjectMapping instead of a JsonMapping so that it is possible to have a custom type as the top-level of your persisted data when using `DesktopApp.program`.
+If you need a JsonMapping, you can use this with [`fromObjectMapping`](#fromObjectMapping)
+(as shown in the example here).
+
+    type MyType
+        = NotAuthorized
+        | Guest Bool String
+        | Employee Int
+
+    myTypeMapping : JsonMapping MyType
+    myTypeMapping =
+        let
+            notAuthorized =
+                tag0 "NotAuthorized" NotAuthorized
+
+            guest =
+                tag2 "Guest"
+                    Guest
+                    ( "is_vip", bool )
+                    ( "name", string )
+
+            employee =
+                tag1 "Employee"
+                    Employee
+                    ( "employee_id", int )
+        in
+        customType
+            [ notAuthorized.decode
+            , guest.decode
+            , employeed.decode
+            ]
+            (\x ->
+                case x of
+                    NotAuthorized ->
+                        notAuthorized.encode
+
+                    Guest isVip name ->
+                        guest.encode isVip name
+
+                    Employee id ->
+                        employeed.encode id
+            )
+            |> fromObjectMapping
+
+-}
+customType : List (VariantDecoder a) -> (a -> VariantEncoder) -> ObjectMapping a a
+customType dec enc =
     ObjectMapping
         (\x ->
             case enc x of
@@ -175,7 +279,7 @@ union dec enc =
             |> Json.Decode.andThen
                 (\t ->
                     case
-                        -- TODO: this is probably faster to just recurse through the list instead of transforming into a Dict
+                        -- TODO: it is probably faster to just recurse through the list instead of transforming into a Dict
                         dec
                             |> List.map (\(VariantDecoder p) -> ( p.tag, p.decode ))
                             |> Dict.fromList
@@ -196,24 +300,41 @@ union dec enc =
         )
 
 
-type alias Variant x f =
-    { decode : VariantDecoder x
-    , encode : f
+{-| Represents how to map an Elm [custom type](https://guide.elm-lang.org/types/custom_types.html) variant (sometimes also called a "tag", "contructor", or "enum value") to and from a JSON object.
+This is different from a JsonMapping because it carries with it information about the name of the variant
+and does some tricks with the type system to make the `customType` API as nice as possible.
+
+**Normally you will not need to reference this type directly.** See the example for [`customType`](#customType).
+
+-}
+type alias Variant decodesTo encoder =
+    { decode : VariantDecoder decodesTo
+    , encode : encoder
     }
 
 
-type VariantDecoder x
+{-| Represents how to decode an Elm [custom type](https://guide.elm-lang.org/types/custom_types.html) variant from a JSON object.
+
+**Normally you will not need to reference this type directly.** See the example for [`customType`](#customType).
+
+-}
+type VariantDecoder decodesTo
     = VariantDecoder
         { tag : String
-        , decode : Decoder x
+        , decode : Decoder decodesTo
         }
 
 
+{-| Represents how to encode an Elm [custom type](https://guide.elm-lang.org/types/custom_types.html) variant to a JSON object.
+
+**Normally you will not need to reference this type directly.** See the example for [`customType`](#customType).
+
+-}
 type VariantEncoder
     = VariantEncoder String (List ( String, Json.Value ))
 
 
-tag0 : String -> x -> Variant x VariantEncoder
+tag0 : String -> decodesTo -> Variant decodesTo VariantEncoder
 tag0 name f =
     { decode =
         VariantDecoder
@@ -228,8 +349,8 @@ tag0 name f =
     }
 
 
-tag1 : String -> (a -> x) -> ( String, Codec a ) -> Variant x (a -> VariantEncoder)
-tag1 name f ( an, Codec ac ad ) =
+tag1 : String -> (a -> decodesTo) -> ( String, JsonMapping a ) -> Variant decodesTo (a -> VariantEncoder)
+tag1 name f ( an, JsonMapping ac ad ) =
     { decode =
         VariantDecoder
             { tag = name
@@ -246,8 +367,8 @@ tag1 name f ( an, Codec ac ad ) =
     }
 
 
-tag2 : String -> (a -> b -> x) -> ( String, Codec a ) -> ( String, Codec b ) -> Variant x (a -> b -> VariantEncoder)
-tag2 name f ( an, Codec ac ad ) ( bn, Codec bc bd ) =
+tag2 : String -> (a -> b -> decodesTo) -> ( String, JsonMapping a ) -> ( String, JsonMapping b ) -> Variant decodesTo (a -> b -> VariantEncoder)
+tag2 name f ( an, JsonMapping ac ad ) ( bn, JsonMapping bc bd ) =
     { decode =
         VariantDecoder
             { tag = name
@@ -264,3 +385,7 @@ tag2 name f ( an, Codec ac ad ) ( bn, Codec bc bd ) =
                 , ( bn, bc b )
                 ]
     }
+
+
+
+-- TODO: tag3, tag4, tag5
