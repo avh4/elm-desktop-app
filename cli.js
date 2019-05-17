@@ -113,6 +113,7 @@ function build() {
   shell.cp(path.join(TEMPLATE_DIR, "index.js"), path.join(BUILD_DIR, "index.js"));
   shell.cp(path.join(TEMPLATE_DIR, "index.html"), path.join(BUILD_DIR, "index.html"));
   shell.cp(path.join(TEMPLATE_DIR, "cli.js"), path.join(BUILD_DIR, "cli.js"));
+  shell.cp(path.join(PROJECT_DIR, "elm.json"), path.join(BUILD_DIR, "elm.json"));
 }
 
 main(process.argv.slice(2));

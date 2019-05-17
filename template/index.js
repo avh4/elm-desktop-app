@@ -1,12 +1,66 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, dialog } = require('electron');
 const ipc = require('electron').ipcMain;
 const fs = require('fs');
 const path = require('path');
 
 function getUserDataFilename() {
   return new Promise(function(resolve) {
-    const filename = process.argv[2] || path.join(app.getPath("userData"), 'user-data.json');
-    resolve(filename);
+    const config = JSON.parse(fs.readFileSync(path.join(__dirname, 'elm.json')));
+    const userSuppliedFilename = process.argv[2];
+    const useDataFileInCurrentDir = config['elm-desktop-app']['use-data-file-in-current-directory'];
+
+    if (useDataFileInCurrentDir) {
+      function resolvePathOrDir(f) {
+        if (fs.lstatSync(f).isDirectory()) {
+          // if the user gave a directory, use the default filename in that dir
+          resolve(path.join(f, useDataFileInCurrentDir));
+        } else {
+          // the user gave a file, so use that file
+          resolve(f);
+        }
+      }
+
+      if (userSuppliedFilename) {
+        resolvePathOrDir(userSuppliedFilename);
+      } else {
+        const launchedFromCli = process.env.ELM_DESKTOP_APP_LAUNCHED_FROM_CLI || false;
+        if (launchedFromCli) {
+          // user didn't request anything, so use the default filename in the current dir
+          resolve(path.join(process.cwd(), useDataFileInCurrentDir));
+        } else {
+          // we need to prompt the user for a directory/file
+          app.focus();
+          dialog.showOpenDialog({
+            message: `Choose a JSON file, or a directory for ${useDataFileInCurrentDir}`,
+            filters: [
+              { name: "JSON Files", extensions: ['json'] },
+              { name: "All Files", extensions: ['*'] }
+            ],
+            properties: [
+              "openFile",
+              "openDirectory",
+              "createDirectory",
+              "promptToCreate"
+            ],
+          }, function(filePaths) {
+            if (!filePaths) {
+              // the user cancelled opening a file
+              app.quit();
+            } else {
+              resolvePathOrDir(filePaths[0]);
+            }
+          });
+        }
+      }
+    } else {
+      if (userSuppliedFilename) {
+        // the user gave a file, so use that file
+        resolve(userSuppliedFilename);
+      } else {
+        // user didn't request anything, so make a file in the userData dir
+        resolve(path.join(app.getPath("userData"), 'user-data.json'));
+      }
+    }
   });
 }
 
