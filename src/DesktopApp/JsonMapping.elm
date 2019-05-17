@@ -1,7 +1,7 @@
 module DesktopApp.JsonMapping exposing
     ( ObjectMapping
     , encode, decoder
-    , object, with, static, mapObject
+    , object, with, static, mapObjectDecoding, mapObjectEncoding
     , JsonMapping, int, string, bool
     , maybe, list, custom, fromObjectMapping, map
     , customType, variant0, variant1, variant2, variant3, variant4, variant5, Variant, VariantEncoder, VariantDecoder
@@ -12,7 +12,7 @@ module DesktopApp.JsonMapping exposing
 @docs ObjectMapping
 @docs encode, decoder
 
-@docs object, with, static, mapObject
+@docs object, with, static, mapObjectDecoding, mapObjectEncoding
 @docs JsonMapping, int, string, bool
 @docs maybe, list, custom, fromObjectMapping, map
 @docs customType, variant0, variant1, variant2, variant3, variant4, variant5, Variant, VariantEncoder, VariantDecoder
@@ -70,13 +70,17 @@ object a =
 
 
 {-| Transforms the type that a ObjectMapping decodes.
-
-TODO: should also take `(b -> a)` ?
-
 -}
-mapObject : (a -> b) -> ObjectMapping encodesFrom a -> ObjectMapping encodesFrom b
-mapObject f (ObjectMapping fields decode) =
+mapObjectDecoding : (a -> b) -> ObjectMapping encodesFrom a -> ObjectMapping encodesFrom b
+mapObjectDecoding f (ObjectMapping fields decode) =
     ObjectMapping fields (Json.Decode.map f decode)
+
+
+{-| Transforms the type that a ObjectMapping encodes.
+-}
+mapObjectEncoding : (b -> a) -> ObjectMapping a decodesTo -> ObjectMapping b decodesTo
+mapObjectEncoding f (ObjectMapping fields decode) =
+    ObjectMapping (f >> fields) decode
 
 
 {-| Gets the Json.Decode.Decoder for the given ObjectMapping.
@@ -160,8 +164,8 @@ custom enc dec =
 {-| Transforms a JsonMapping. This requires functions for transforming in each direction
 so that both encoding and decoding can be handled.
 -}
-map : (b -> a) -> (a -> b) -> JsonMapping a -> JsonMapping b
-map en de (JsonMapping enc dec) =
+map : (a -> b) -> (b -> a) -> JsonMapping a -> JsonMapping b
+map de en (JsonMapping enc dec) =
     JsonMapping (en >> enc) (Json.Decode.map de dec)
 
 
