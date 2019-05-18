@@ -71,6 +71,7 @@ function build() {
 
   shell.mkdir("-p", GEN_DIR);
   shell.mkdir("-p", BUILD_DIR);
+  shell.mkdir("-p", path.join(BUILD_DIR, "build"));
 
   shell.pushd(BUILD_DIR);
   if (!shell.test("-e", "package.json")) {
@@ -131,6 +132,9 @@ function build() {
   shell.cp(path.join(TEMPLATE_DIR, "index.html"), path.join(BUILD_DIR, "index.html"));
   shell.cp(path.join(TEMPLATE_DIR, "cli.js"), path.join(BUILD_DIR, "cli.js"));
   shell.cp(path.join(PROJECT_DIR, "elm.json"), path.join(BUILD_DIR, "elm.json"));
+  if (fs.existsSync(path.join(PROJECT_DIR, "icon.png"))) {
+    shell.cp(path.join(PROJECT_DIR, "icon.png"), path.join(BUILD_DIR, "build", "icon.png"));
+  }
 }
 
 main(process.argv.slice(2));

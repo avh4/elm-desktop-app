@@ -5,7 +5,7 @@
     ],
     "elm-desktop-app": {
         "name": "iCount",
-        "app-id": "net.avh4.elm-desktop-app.example",
+        "app-id": "net.avh4.elm-desktop-app.example"
     },
     "elm-version": "0.19.0",
     "dependencies": {
