@@ -1,14 +1,24 @@
-const { Given, When, Then, Before, After } = require("cucumber");
+const { Given, When, Then, Before, After, BeforeAll } = require("cucumber");
 const shell = require("shelljs");
 const expect = require("expect");
 const fs = require("fs");
 const path = require("path");
 
+const packageVersion = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "..", "package.json")))["version"];
+
+BeforeAll(function() {
+  shell.exec("npm pack");
+});
+
 Before(function() {
+  // clean
   shell.rm("-Rf", "_test");
+
+  // set up test sandbox
   shell.mkdir("-p", "_test");
   shell.cd("_test");
-  this.exec("npm install ../");
+  this.exec("npm init --yes");
+  this.exec(`npm install ../elm-desktop-app-${packageVersion}.tgz`);
 });
 
 After(function() {

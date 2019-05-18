@@ -28,7 +28,7 @@ class CustomWorld {
   }
 
   runElmDesktopApp(args) {
-    this.exec(path.join(__dirname, "..", "..", "cli.js") + " " + args.join(" ")); // TODO: properly escape this
+    this.exec(path.join("node_modules", ".bin", "elm-desktop-app") + " " + args.join(" ")); // TODO: properly escape this
   }
 
   writeMain() {
