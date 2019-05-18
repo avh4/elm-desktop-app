@@ -7,6 +7,12 @@
     "check": "elm make --docs=docs.json && elm-format --validate example src",
     "start": "./$npm_package_bin_elm_desktop_app run example"
   },
+  "files": [
+    "src",
+    "template",
+    "cli.js",
+    "config.schema.json"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/avh4/elm-desktop-app.git"
