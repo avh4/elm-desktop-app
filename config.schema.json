@@ -11,7 +11,7 @@
       "enum": [ "application" ]
     },
     "elm-version": {
-      "enum": [ "0.19.0" ]
+      "enum": [ "0.19.0", "0.19.1" ]
     },
     "source-directories": {
       "type": "array",
