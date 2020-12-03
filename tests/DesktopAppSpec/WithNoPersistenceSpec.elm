@@ -1,6 +1,5 @@
-module DesktopAppSpec exposing (all)
+module DesktopAppSpec.WithNoPersistenceSpec exposing (all)
 
-import DesktopApp.JsonMapping as JsonMapping
 import DesktopApp.Testable as DesktopApp
 import DesktopAppHelper exposing (simulateAllEffects)
 import Expect exposing (Expectation)
@@ -9,7 +8,7 @@ import Html.Events exposing (onClick)
 import Json.Decode
 import ProgramTest
 import Test exposing (..)
-import Test.Html.Selector exposing (text)
+import Test.Html.Selector exposing (class, text)
 
 
 type alias TestModel =
@@ -71,10 +70,7 @@ start =
                             , Html.button [ onClick Toggle ] [ Html.text "Toggle" ]
                             ]
                         }
-                , persistence =
-                    JsonMapping.object Loaded
-                        |> JsonMapping.with "count" .count JsonMapping.int
-                        |> Just
+                , persistence = Nothing
                 }
     in
     ProgramTest.createDocument
@@ -88,68 +84,19 @@ start =
 
 all : Test
 all =
-    describe "DesktopApp"
-        [ test "writes state on first init" <|
+    describe "DesktopApp with no data persistence"
+        [ test "does not try to load state" <|
             \() ->
                 start
-                    |> simulateUserDataNotFound
-                    |> expectWriteUserData """{"count":0}"""
-        , test "writes stat on update" <|
-            \() ->
-                start
-                    |> simulateUserDataNotFound
-                    |> clearRecordedPortValues
-                    |> ProgramTest.clickButton "Increment"
-                    |> expectWriteUserData """{"count":1}"""
-        , test "loads persisted state when present" <|
-            \() ->
-                start
-                    |> simulateLoadUserData """{"count":7}"""
-                    |> ProgramTest.expectViewHas [ text "count:7" ]
-        , test "does not write to disk if nothing persisted has changed" <|
-            \() ->
-                start
-                    |> simulateUserDataNotFound
-                    |> clearRecordedPortValues
-                    |> ProgramTest.clickButton "Toggle"
                     |> ProgramTest.expectOutgoingPortValues
-                        "writeUserData"
+                        "loadUserData"
                         (Json.Decode.succeed ())
                         (Expect.equal [])
+        , test "skips showing the loading state" <|
+            \() ->
+                start
+                    |> Expect.all
+                        [ ProgramTest.expectViewHas [ text "count:0" ]
+                        , ProgramTest.expectViewHasNot [ class DesktopApp.htmlClasses.loading ]
+                        ]
         ]
-
-
-clearRecordedPortValues : ProgramTest -> ProgramTest
-clearRecordedPortValues =
-    ProgramTest.ensureOutgoingPortValues
-        "writeUserData"
-        (Json.Decode.succeed ())
-        (\_ -> Expect.pass)
-
-
-expectWriteUserData : String -> ProgramTest -> Expectation
-expectWriteUserData expected =
-    ProgramTest.expectOutgoingPortValues
-        "writeUserData"
-        Json.Decode.string
-        (Expect.equal [ expected ])
-
-
-simulateLoadUserData : String -> ProgramTest -> ProgramTest
-simulateLoadUserData loadedContent testContext =
-    testContext
-        |> ProgramTest.ensureOutgoingPortValues "loadUserData"
-            (Json.Decode.succeed ())
-            (List.length >> Expect.greaterThan 0)
-        |> ProgramTest.update (DesktopApp.UserDataLoaded (Just loadedContent))
-
-
-simulateUserDataNotFound :
-    ProgramTest.ProgramTest model (DesktopApp.Msg msg) ( cmd, List DesktopApp.Effect )
-    -> ProgramTest.ProgramTest model (DesktopApp.Msg msg) ( cmd, List DesktopApp.Effect )
-simulateUserDataNotFound testContext =
-    testContext
-        |> ProgramTest.ensureOutgoingPortValues "loadUserData"
-            (Json.Decode.succeed ())
-            (List.length >> Expect.greaterThan 0)
-        |> ProgramTest.update (DesktopApp.UserDataLoaded Nothing)

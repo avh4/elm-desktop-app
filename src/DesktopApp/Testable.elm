@@ -4,6 +4,7 @@ module DesktopApp.Testable exposing
     , Model
     , Msg(..)
     , defaultMenu
+    , htmlClasses
     , program
     )
 
@@ -23,10 +24,13 @@ type Effect
 type Model yourModel
     = Loading
     | Error String
-    | Model
-        { appModel : yourModel
-        , lastSaved : Maybe String
-        }
+    | Model (ActiveModel yourModel)
+
+
+type alias ActiveModel yourModel =
+    { appModel : yourModel
+    , lastSaved : Maybe String
+    }
 
 
 type Msg yourMsg
@@ -63,19 +67,50 @@ defaultMenu =
 program :
     Config model msg
     ->
-        { init : () -> ( Model model, ( Cmd (Msg msg), List Effect ) )
-        , subscriptions : Model model -> Sub (Msg msg)
-        , update : Msg msg -> Model model -> ( Model model, ( Cmd (Msg msg), List Effect ) )
-        , view : Model model -> Browser.Document (Msg msg)
+        { init :
+            ()
+            ->
+                ( Model model
+                , ( Cmd (Msg msg), List Effect )
+                )
+        , subscriptions :
+            Model model
+            -> Sub (Msg msg)
+        , update :
+            Msg msg
+            -> Model model
+            ->
+                ( Model model
+                , ( Cmd (Msg msg), List Effect )
+                )
+        , view :
+            Model model
+            -> Browser.Document (Msg msg)
         }
 program config =
     { init =
         \() ->
-            ( Loading
-            , ( Cmd.none
-              , [ LoadUserData ]
-              )
-            )
+            case config.persistence of
+                Nothing ->
+                    let
+                        ( appModel, cmd ) =
+                            config.init
+                    in
+                    ( Model
+                        { appModel = appModel
+                        , lastSaved = Nothing
+                        }
+                    , ( Cmd.map AppMsg cmd
+                      , []
+                      )
+                    )
+
+                Just _ ->
+                    ( Loading
+                    , ( Cmd.none
+                      , [ LoadUserData ]
+                      )
+                    )
     , update = update config
     , subscriptions = subscriptions config
     , view = view config
@@ -232,6 +267,7 @@ view config m =
                     [ style "width" "100%"
                     , style "background" "#ece3e7"
                     , style "min-height" "100vh"
+                    , Html.Attributes.class htmlClasses.loading
                     ]
                     [ Html.div
                         [ style "opacity" "0.7"
@@ -258,3 +294,8 @@ view config m =
             { title = title
             , body = body |> List.map (Html.map AppMsg)
             }
+
+
+htmlClasses =
+    { loading = "_elm-desktop-app_loading"
+    }
