@@ -16,10 +16,7 @@ import Browser
 import DesktopApp.JsonMapping exposing (ObjectMapping)
 import DesktopApp.Ports as Ports
 import DesktopApp.Testable as DesktopApp
-import Dict exposing (Dict)
 import Html exposing (Html)
-import Json.Decode exposing (Decoder)
-import Json.Encode as Json
 
 
 {-| This is the type for your Elm program when using `DesktopApp.program`
@@ -71,7 +68,7 @@ program :
     { init : ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
-    , view : model -> Browser.Document msg
+    , view : model -> Window msg
     , persistence : Maybe (ObjectMapping model msg)
     }
     -> Program model msg
@@ -108,3 +105,14 @@ program config =
                     |> Tuple.mapSecond performAll
         , view = p.view
         }
+
+
+{-| Returned by the `view` function provided to [`program`](#program).
+
+This represents a single window that will be displayed to the user.
+
+-}
+type alias Window msg =
+    { title : String
+    , body : List (Html msg)
+    }

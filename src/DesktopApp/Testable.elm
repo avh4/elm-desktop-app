@@ -39,8 +39,14 @@ type alias Config model msg =
     { init : ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
-    , view : model -> Browser.Document msg
+    , view : model -> Window msg
     , persistence : Maybe (ObjectMapping model msg)
+    }
+
+
+type alias Window msg =
+    { title : String
+    , body : List (Html msg)
     }
 
 

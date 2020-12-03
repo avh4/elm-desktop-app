@@ -8,8 +8,6 @@ import DesktopApp.JsonMapping as JsonMapping exposing (ObjectMapping)
 import Html exposing (Html)
 import Html.Attributes exposing (placeholder, style, type_, value)
 import Html.Events exposing (onCheck, onClick, onInput)
-import Json.Encode as Json
-import Time
 
 
 main : DesktopApp.Program Model Msg
