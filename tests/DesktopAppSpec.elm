@@ -58,6 +58,7 @@ start =
                 , view =
                     \model ->
                         { title = ""
+                        , menubar = DesktopApp.defaultMenu
                         , body =
                             [ Html.text ("count:" ++ String.fromInt model.count)
                             , Html.text ("uiState:" ++ Debug.toString model.uiState)

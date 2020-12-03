@@ -1,18 +1,18 @@
 module DesktopApp.Testable exposing
     ( Effect(..)
+    , Menubar
     , Model
     , Msg(..)
+    , defaultMenu
     , program
     )
 
 import Browser
 import DesktopApp.JsonMapping as JsonMapping exposing (ObjectMapping)
 import DesktopApp.Ports as Ports
-import Dict exposing (Dict)
 import Html exposing (Html)
 import Html.Attributes exposing (style)
 import Json.Decode exposing (Decoder)
-import Json.Encode as Json
 
 
 type Effect
@@ -46,8 +46,18 @@ type alias Config model msg =
 
 type alias Window msg =
     { title : String
+    , menubar : Menubar
     , body : List (Html msg)
     }
+
+
+type Menubar
+    = DefaultMenu
+
+
+defaultMenu : Menubar
+defaultMenu =
+    DefaultMenu
 
 
 program :

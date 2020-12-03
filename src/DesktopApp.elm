@@ -1,4 +1,7 @@
-module DesktopApp exposing (program, Program, Model, Msg)
+module DesktopApp exposing
+    ( program, Program, Window, Model, Msg
+    , Menubar, defaultMenu
+    )
 
 {-| This module lets you write desktop applications (for Mac, Linux, and Windows) in Elm. You must use the [`elm-desktop-app` ![](https://img.shields.io/npm/v/elm-desktop-app.svg)][npm-package]
 command line tool to build your program.
@@ -8,7 +11,8 @@ See the [README](./) for an example of how to set up and build your application.
 
 [npm-package]: https://www.npmjs.com/package/elm-desktop-app
 
-@docs program, Program, Model, Msg
+@docs program, Program, Window, Model, Msg
+@docs Menubar, defaultMenu
 
 -}
 
@@ -114,5 +118,19 @@ This represents a single window that will be displayed to the user.
 -}
 type alias Window msg =
     { title : String
+    , menubar : Menubar
     , body : List (Html msg)
     }
+
+
+{-| Defines the menu that will be shown for a particular window.
+-}
+type alias Menubar =
+    DesktopApp.Menubar
+
+
+{-| Shows the default Electron menu.
+-}
+defaultMenu : Menubar
+defaultMenu =
+    DesktopApp.defaultMenu
