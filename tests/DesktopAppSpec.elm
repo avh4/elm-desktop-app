@@ -5,9 +5,9 @@ import DesktopApp.Testable as DesktopApp
 import Expect exposing (Expectation)
 import Html
 import Html.Events exposing (onClick)
+import ProgramTest
 import Test exposing (..)
 import Test.Html.Selector exposing (text)
-import TestContext
 
 
 type alias TestModel =
@@ -22,11 +22,14 @@ type TestMsg
     | Toggle
 
 
-type alias TestContext =
-    TestContext.TestContext (DesktopApp.Msg TestMsg) (DesktopApp.Model TestModel) ( Cmd (DesktopApp.Msg TestMsg), List DesktopApp.Effect )
+type alias ProgramTest =
+    ProgramTest.ProgramTest
+        (DesktopApp.Model TestModel)
+        (DesktopApp.Msg TestMsg)
+        ( Cmd (DesktopApp.Msg TestMsg), List DesktopApp.Effect )
 
 
-start : TestContext
+start : ProgramTest
 start =
     let
         program =
@@ -37,7 +40,7 @@ start =
                       }
                     , Cmd.none
                     )
-                , subscriptions = \model -> Sub.none
+                , subscriptions = \_ -> Sub.none
                 , update =
                     \msg model ->
                         case msg of
@@ -72,11 +75,12 @@ start =
                         |> Just
                 }
     in
-    TestContext.create
-        { init = program.init ()
+    ProgramTest.createDocument
+        { init = program.init
         , update = program.update
-        , view = \model -> Html.node "body" [] (program.view model).body
+        , view = \model -> program.view model
         }
+        |> ProgramTest.start ()
 
 
 all : Test
@@ -86,43 +90,43 @@ all =
             \() ->
                 start
                     |> simulateUserDataNotFound
-                    |> TestContext.expectLastEffect (Tuple.second >> Expect.equal [ DesktopApp.WriteUserData """{"count":0}""" ])
+                    |> ProgramTest.expectLastEffect (Tuple.second >> Expect.equal [ DesktopApp.WriteUserData """{"count":0}""" ])
         , test "writes stat on update" <|
             \() ->
                 start
                     |> simulateUserDataNotFound
-                    |> TestContext.clickButton "Increment"
-                    |> TestContext.expectLastEffect (Tuple.second >> Expect.equal [ DesktopApp.WriteUserData """{"count":1}""" ])
+                    |> ProgramTest.clickButton "Increment"
+                    |> ProgramTest.expectLastEffect (Tuple.second >> Expect.equal [ DesktopApp.WriteUserData """{"count":1}""" ])
         , test "loads persisted state when present" <|
             \() ->
                 start
                     |> simulateLoadUserData """{"count":7}"""
-                    |> TestContext.expectViewHas [ text "count:7" ]
+                    |> ProgramTest.expectViewHas [ text "count:7" ]
         , test "does not write to disk if nothing persisted has changed" <|
             \() ->
                 start
                     |> simulateUserDataNotFound
-                    |> TestContext.clickButton "Toggle"
-                    |> TestContext.expectLastEffect (Tuple.second >> Expect.equal [])
+                    |> ProgramTest.clickButton "Toggle"
+                    |> ProgramTest.expectLastEffect (Tuple.second >> Expect.equal [])
         ]
 
 
 simulateLoadUserData :
     String
-    -> TestContext.TestContext (DesktopApp.Msg msg) model ( cmd, List DesktopApp.Effect )
-    -> TestContext.TestContext (DesktopApp.Msg msg) model ( cmd, List DesktopApp.Effect )
+    -> ProgramTest.ProgramTest model (DesktopApp.Msg msg) ( cmd, List DesktopApp.Effect )
+    -> ProgramTest.ProgramTest model (DesktopApp.Msg msg) ( cmd, List DesktopApp.Effect )
 simulateLoadUserData loadedContent testContext =
     testContext
-        |> TestContext.shouldHaveLastEffect (Tuple.second >> Expect.equal [ DesktopApp.LoadUserData ])
+        |> ProgramTest.ensureLastEffect (Tuple.second >> Expect.equal [ DesktopApp.LoadUserData ])
         -- TODO: Avoid manually creating the msg after https://github.com/avh4/elm-program-test/issues/17 is implemented
-        |> TestContext.update (DesktopApp.UserDataLoaded (Just loadedContent))
+        |> ProgramTest.update (DesktopApp.UserDataLoaded (Just loadedContent))
 
 
 simulateUserDataNotFound :
-    TestContext.TestContext (DesktopApp.Msg msg) model ( cmd, List DesktopApp.Effect )
-    -> TestContext.TestContext (DesktopApp.Msg msg) model ( cmd, List DesktopApp.Effect )
+    ProgramTest.ProgramTest model (DesktopApp.Msg msg) ( cmd, List DesktopApp.Effect )
+    -> ProgramTest.ProgramTest model (DesktopApp.Msg msg) ( cmd, List DesktopApp.Effect )
 simulateUserDataNotFound testContext =
     testContext
-        |> TestContext.shouldHaveLastEffect (Tuple.second >> Expect.equal [ DesktopApp.LoadUserData ])
+        |> ProgramTest.ensureLastEffect (Tuple.second >> Expect.equal [ DesktopApp.LoadUserData ])
         -- TODO: Avoid manually creating the msg after https://github.com/avh4/elm-program-test/issues/17 is implemented
-        |> TestContext.update (DesktopApp.UserDataLoaded Nothing)
+        |> ProgramTest.update (DesktopApp.UserDataLoaded Nothing)
