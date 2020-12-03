@@ -85,17 +85,9 @@ program config =
             Cmd.batch
                 [ cmd
                 , effects
-                    |> List.map perform
+                    |> List.map runEffect
                     |> Cmd.batch
                 ]
-
-        perform effect =
-            case effect of
-                DesktopApp.WriteUserData content ->
-                    Ports.writeUserData content
-
-                DesktopApp.LoadUserData ->
-                    Ports.loadUserData ()
     in
     Browser.document
         { init =
@@ -109,6 +101,16 @@ program config =
                     |> Tuple.mapSecond performAll
         , view = p.view
         }
+
+
+runEffect : DesktopApp.Effect -> Cmd msg
+runEffect effect =
+    case effect of
+        DesktopApp.WriteUserData content ->
+            Ports.writeUserData content
+
+        DesktopApp.LoadUserData ->
+            Ports.loadUserData ()
 
 
 {-| Returned by the `view` function provided to [`program`](#program).

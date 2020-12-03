@@ -5,7 +5,11 @@ import DesktopApp.Testable as DesktopApp
 import Expect exposing (Expectation)
 import Html
 import Html.Events exposing (onClick)
+import Json.Decode
+import Json.Encode
 import ProgramTest
+import SimulatedEffect.Cmd
+import SimulatedEffect.Ports
 import Test exposing (..)
 import Test.Html.Selector exposing (text)
 
@@ -80,7 +84,23 @@ start =
         , update = program.update
         , view = \model -> program.view model
         }
+        |> ProgramTest.withSimulatedEffects simulateAllEffects
         |> ProgramTest.start ()
+
+
+simulateAllEffects : ( Cmd (DesktopApp.Msg TestMsg), List DesktopApp.Effect ) -> ProgramTest.SimulatedEffect msg
+simulateAllEffects ( _, effects ) =
+    SimulatedEffect.Cmd.batch (List.map simulateEffect effects)
+
+
+simulateEffect : DesktopApp.Effect -> ProgramTest.SimulatedEffect msg
+simulateEffect effect =
+    case effect of
+        DesktopApp.WriteUserData content ->
+            SimulatedEffect.Ports.send "writeUserData" (Json.Encode.string content)
+
+        DesktopApp.LoadUserData ->
+            SimulatedEffect.Ports.send "loadUserData" Json.Encode.null
 
 
 all : Test
@@ -90,13 +110,14 @@ all =
             \() ->
                 start
                     |> simulateUserDataNotFound
-                    |> ProgramTest.expectLastEffect (Tuple.second >> Expect.equal [ DesktopApp.WriteUserData """{"count":0}""" ])
+                    |> expectWriteUserData """{"count":0}"""
         , test "writes stat on update" <|
             \() ->
                 start
                     |> simulateUserDataNotFound
+                    |> clearRecordedPortValues
                     |> ProgramTest.clickButton "Increment"
-                    |> ProgramTest.expectLastEffect (Tuple.second >> Expect.equal [ DesktopApp.WriteUserData """{"count":1}""" ])
+                    |> expectWriteUserData """{"count":1}"""
         , test "loads persisted state when present" <|
             \() ->
                 start
@@ -106,19 +127,37 @@ all =
             \() ->
                 start
                     |> simulateUserDataNotFound
+                    |> clearRecordedPortValues
                     |> ProgramTest.clickButton "Toggle"
-                    |> ProgramTest.expectLastEffect (Tuple.second >> Expect.equal [])
+                    |> ProgramTest.expectOutgoingPortValues
+                        "writeUserData"
+                        (Json.Decode.succeed ())
+                        (Expect.equal [])
         ]
 
 
-simulateLoadUserData :
-    String
-    -> ProgramTest.ProgramTest model (DesktopApp.Msg msg) ( cmd, List DesktopApp.Effect )
-    -> ProgramTest.ProgramTest model (DesktopApp.Msg msg) ( cmd, List DesktopApp.Effect )
+clearRecordedPortValues : ProgramTest -> ProgramTest
+clearRecordedPortValues =
+    ProgramTest.ensureOutgoingPortValues
+        "writeUserData"
+        (Json.Decode.succeed ())
+        (\_ -> Expect.pass)
+
+
+expectWriteUserData : String -> ProgramTest -> Expectation
+expectWriteUserData expected =
+    ProgramTest.expectOutgoingPortValues
+        "writeUserData"
+        Json.Decode.string
+        (Expect.equal [ expected ])
+
+
+simulateLoadUserData : String -> ProgramTest -> ProgramTest
 simulateLoadUserData loadedContent testContext =
     testContext
-        |> ProgramTest.ensureLastEffect (Tuple.second >> Expect.equal [ DesktopApp.LoadUserData ])
-        -- TODO: Avoid manually creating the msg after https://github.com/avh4/elm-program-test/issues/17 is implemented
+        |> ProgramTest.ensureOutgoingPortValues "loadUserData"
+            (Json.Decode.succeed ())
+            (List.length >> Expect.greaterThan 0)
         |> ProgramTest.update (DesktopApp.UserDataLoaded (Just loadedContent))
 
 
@@ -127,6 +166,7 @@ simulateUserDataNotFound :
     -> ProgramTest.ProgramTest model (DesktopApp.Msg msg) ( cmd, List DesktopApp.Effect )
 simulateUserDataNotFound testContext =
     testContext
-        |> ProgramTest.ensureLastEffect (Tuple.second >> Expect.equal [ DesktopApp.LoadUserData ])
-        -- TODO: Avoid manually creating the msg after https://github.com/avh4/elm-program-test/issues/17 is implemented
+        |> ProgramTest.ensureOutgoingPortValues "loadUserData"
+            (Json.Decode.succeed ())
+            (List.length >> Expect.greaterThan 0)
         |> ProgramTest.update (DesktopApp.UserDataLoaded Nothing)
