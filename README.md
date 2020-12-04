@@ -21,7 +21,7 @@ It's built on top of [Electron], and it currently supports the following uses:
 
 ## Usage
 
-Use the [`elm-desktop-app`][npm-package] command line tool to create a new project, which includes a dependency on the [`avh4/elm-desktop-app`][elm-package] Elm pacakge and a working starting-point for you app:
+Use the [`elm-desktop-app`][npm-package] command line tool to create a new project, which includes a dependency on the [`avh4/elm-desktop-app`][elm-package] Elm package and a working starting-point for you app:
 
 ```sh
 npm install -g elm-desktop-app
