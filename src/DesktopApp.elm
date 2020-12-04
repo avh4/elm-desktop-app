@@ -1,6 +1,6 @@
 module DesktopApp exposing
     ( program, Program, Window, Model, Msg
-    , Menubar, defaultMenu
+    , Menubar, defaultMenu, noMenu
     )
 
 {-| This module lets you write desktop applications (for Mac, Linux, and Windows) in Elm. You must use the [`elm-desktop-app` ![](https://img.shields.io/npm/v/elm-desktop-app.svg)][npm-package]
@@ -12,12 +12,13 @@ See the [README](./) for an example of how to set up and build your application.
 [npm-package]: https://www.npmjs.com/package/elm-desktop-app
 
 @docs program, Program, Window, Model, Msg
-@docs Menubar, defaultMenu
+@docs Menubar, defaultMenu, noMenu
 
 -}
 
 import Browser
-import DesktopApp.JsonMapping exposing (ObjectMapping)
+import DesktopApp.JsonMapping as JsonMapping exposing (ObjectMapping)
+import DesktopApp.Menubar
 import DesktopApp.Ports as Ports
 import DesktopApp.Testable as DesktopApp
 import Html exposing (Html)
@@ -112,6 +113,9 @@ runEffect effect =
         DesktopApp.LoadUserData ->
             Ports.loadUserData ()
 
+        DesktopApp.SetMenu menubar ->
+            Ports.setMenu (JsonMapping.encodeValue DesktopApp.Menubar.mapping menubar)
+
 
 {-| Returned by the `view` function provided to [`program`](#program).
 
@@ -128,7 +132,7 @@ type alias Window msg =
 {-| Defines the menu that will be shown for a particular window.
 -}
 type alias Menubar =
-    DesktopApp.Menubar
+    DesktopApp.Menubar.Menubar
 
 
 {-| Shows the default Electron menu.
@@ -136,3 +140,10 @@ type alias Menubar =
 defaultMenu : Menubar
 defaultMenu =
     DesktopApp.defaultMenu
+
+
+{-| Hides the menubar.
+-}
+noMenu : Menubar
+noMenu =
+    DesktopApp.noMenu

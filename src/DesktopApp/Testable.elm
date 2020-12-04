@@ -1,15 +1,16 @@
 module DesktopApp.Testable exposing
     ( Effect(..)
-    , Menubar
     , Model
     , Msg(..)
     , defaultMenu
     , htmlClasses
+    , noMenu
     , program
     )
 
 import Browser
 import DesktopApp.JsonMapping as JsonMapping exposing (ObjectMapping)
+import DesktopApp.Menubar exposing (Menubar)
 import DesktopApp.Ports as Ports
 import Html exposing (Html)
 import Html.Attributes exposing (style)
@@ -19,6 +20,7 @@ import Json.Decode exposing (Decoder)
 type Effect
     = WriteUserData String
     | LoadUserData
+    | SetMenu Menubar
 
 
 type Model yourModel
@@ -55,13 +57,14 @@ type alias Window msg =
     }
 
 
-type Menubar
-    = DefaultMenu
-
-
 defaultMenu : Menubar
 defaultMenu =
-    DefaultMenu
+    DesktopApp.Menubar.DefaultMenu
+
+
+noMenu : Menubar
+noMenu =
+    DesktopApp.Menubar.NoMenu
 
 
 program :
@@ -101,7 +104,7 @@ program config =
                         , lastSaved = Nothing
                         }
                     , ( Cmd.map AppMsg cmd
-                      , []
+                      , updateUi config appModel
                       )
                     )
 
@@ -159,6 +162,7 @@ update config msg m =
                     , lastSaved = Nothing
                     }
                         |> saveFiles config cmd
+                        |> addEffects (updateUi config model)
 
                 UserDataLoaded (Just content) ->
                     case config.persistence of
@@ -209,6 +213,7 @@ update config msg m =
                     in
                     { model | appModel = newModel }
                         |> saveFiles config cmd
+                        |> addEffects (updateUi config newModel)
 
                 UserDataLoaded _ ->
                     -- We shouldn't be receiving data anymore, so ignore it
@@ -216,6 +221,12 @@ update config msg m =
                     ignore
 
 
+addEffects : appendable -> ( a, ( b, appendable ) ) -> ( a, ( b, appendable ) )
+addEffects newEffects ( model, ( cmd, effects ) ) =
+    ( model, ( cmd, newEffects ++ effects ) )
+
+
+saveFiles : Config model msg -> Cmd msg -> ActiveModel model -> ( Model model, ( Cmd (Msg msg), List Effect ) )
 saveFiles config cmd model =
     case config.persistence of
         Nothing ->
@@ -248,6 +259,16 @@ saveFiles config cmd model =
               , writeEffects
               )
             )
+
+
+updateUi : Config model msg -> model -> List Effect
+updateUi config model =
+    let
+        { menubar } =
+            config.view model
+    in
+    [ SetMenu menubar
+    ]
 
 
 view : Config model msg -> Model model -> Browser.Document (Msg msg)

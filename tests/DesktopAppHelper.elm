@@ -1,5 +1,7 @@
 module DesktopAppHelper exposing (..)
 
+import DesktopApp.JsonMapping as JsonMapping
+import DesktopApp.Menubar as Menubar
 import DesktopApp.Testable as DesktopApp
 import Json.Encode
 import ProgramTest
@@ -20,3 +22,7 @@ simulateEffect effect =
 
         DesktopApp.LoadUserData ->
             SimulatedEffect.Ports.send "loadUserData" Json.Encode.null
+
+        DesktopApp.SetMenu menubar ->
+            SimulatedEffect.Ports.send "setMenu"
+                (JsonMapping.encodeValue Menubar.mapping menubar)
