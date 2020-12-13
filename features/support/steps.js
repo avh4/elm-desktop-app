@@ -65,6 +65,11 @@ When('I make change my program\'s persistence to', function (docString) {
 When('I run the app with {string}', function (dataFilename) {
   this.runElmDesktopApp(["build"]);
 
+  // workaround for https://github.com/electron-userland/spectron/issues/720#issuecomment-743950042
+  const indexJs = fs.readFileSync('./elm-stuff/elm-desktop-app/app/index.js', 'utf8')
+    .replace('nodeIntegration: true', 'nodeIntegration: true, enableRemoteModule: true');
+  fs.writeFileSync('./elm-stuff/elm-desktop-app/app/index.js', indexJs, 'utf8');
+
   var Application = require('spectron').Application;
   var app = new Application({
     path: './elm-stuff/elm-desktop-app/app/node_modules/.bin/electron',
@@ -92,7 +97,9 @@ Then('my app has a unique id', function() {
 
 When('click {string}', function (label) {
   this.app.client.waitUntilTextExists("body", label);
-  return this.app.client.element("button").click(); // TODO: find the exact button
+  return this.app.client.$("button").then(function (button) {
+    return button.click(); // TODO: find the exact button
+  });
 });
 
 Given('a JSON file {string}', function (filename, docString) {
