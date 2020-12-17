@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog } = require('electron');
+const { app, BrowserWindow, Menu, dialog } = require('electron');
 const ipc = require('electron').ipcMain;
 const fs = require('fs');
 const path = require('path');
@@ -95,6 +95,24 @@ function createWindow(userDataFilename) {
         event.reply('user-data-loaded', content);
       }
     });
+  });
+
+  ipc.on('set-menu', function(event, menubar) {
+    switch (menubar) {
+      case 'NoMenu':
+        win.removeMenu();
+        break;
+      case 'DefaultMenu':
+        win.setMenu(Menu.getApplicationMenu());
+        break;
+      default:
+        console.log(menubar);
+        var menu = Menu.buildFromTemplate(menubar);
+        win.setMenu(menu);
+        // TODO: set Applicaiton menu also
+//        win.alert(menubar);
+//        throw new Error("Internal error: Please report this to https://github.com/avh4/elm-desktop-app/issues Received unexpected set-menu event: " + JSON.stringify(menubar));
+    }
   });
 }
 

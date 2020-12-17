@@ -1,15 +1,13 @@
 module Main exposing (main)
 
 import BeautifulExample
-import Browser
 import Color
 import DesktopApp
 import DesktopApp.JsonMapping as JsonMapping exposing (ObjectMapping)
+import DesktopApp.Menu
 import Html exposing (Html)
 import Html.Attributes exposing (placeholder, style, type_, value)
 import Html.Events exposing (onCheck, onClick, onInput)
-import Json.Encode as Json
-import Time
 
 
 main : DesktopApp.Program Model Msg
@@ -68,7 +66,7 @@ update msg model =
             { model | darkMode = newDarkMode }
 
 
-view : Model -> Browser.Document Msg
+view : Model -> DesktopApp.Window Msg
 view model =
     { title =
         if String.isEmpty (String.trim model.name) then
@@ -76,6 +74,24 @@ view model =
 
         else
             String.trim model.name ++ "'s iCount"
+    , menubar =
+        DesktopApp.customMenu
+            [ DesktopApp.Menu.SubMenu
+                { label = "Counter"
+                , items =
+                    [ DesktopApp.Menu.MenuItem
+                        { label = "Increment"
+                        , action = DesktopApp.Menu.Custom Increment
+                        , enabled = True
+                        }
+                    , DesktopApp.Menu.MenuItem
+                        { label = "Decrement"
+                        , action = DesktopApp.Menu.Custom Decrement
+                        , enabled = True
+                        }
+                    ]
+                }
+            ]
     , body =
         [ BeautifulExample.view
             { title = "iCount"

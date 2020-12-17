@@ -1,5 +1,6 @@
+dist: focal
 language: node_js
-node_js: "10"
+node_js: "14"
 
 addons:
   apt:
@@ -7,7 +8,7 @@ addons:
       - xvfb
 
 install:
-  - npm install -g elm@elm0.19.0
+  - npm install -g elm@latest-0.19.1
   - npm install
   - export DISPLAY=':99.0'
   - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &

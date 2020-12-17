@@ -1,4 +1,8 @@
-module DesktopApp exposing (program, Program, Model, Msg)
+module DesktopApp exposing
+    ( program, Program, Window, Model, Msg
+    , Menubar, defaultMenu, noMenu
+    , customMenu
+    )
 
 {-| This module lets you write desktop applications (for Mac, Linux, and Windows) in Elm. You must use the [`elm-desktop-app` ![](https://img.shields.io/npm/v/elm-desktop-app.svg)][npm-package]
 command line tool to build your program.
@@ -8,18 +12,18 @@ See the [README](./) for an example of how to set up and build your application.
 
 [npm-package]: https://www.npmjs.com/package/elm-desktop-app
 
-@docs program, Program, Model, Msg
+@docs program, Program, Window, Model, Msg
+@docs Menubar, defaultMenu, noMenu
 
 -}
 
 import Browser
-import DesktopApp.JsonMapping exposing (ObjectMapping)
+import DesktopApp.JsonMapping as JsonMapping exposing (ObjectMapping)
+import DesktopApp.Menu exposing (MenuItem)
+import DesktopApp.Menubar
 import DesktopApp.Ports as Ports
 import DesktopApp.Testable as DesktopApp
-import Dict exposing (Dict)
 import Html exposing (Html)
-import Json.Decode exposing (Decoder)
-import Json.Encode as Json
 
 
 {-| This is the type for your Elm program when using `DesktopApp.program`
@@ -71,7 +75,7 @@ program :
     { init : ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
-    , view : model -> Browser.Document msg
+    , view : model -> Window msg
     , persistence : Maybe (ObjectMapping model msg)
     }
     -> Program model msg
@@ -84,17 +88,9 @@ program config =
             Cmd.batch
                 [ cmd
                 , effects
-                    |> List.map perform
+                    |> List.map runEffect
                     |> Cmd.batch
                 ]
-
-        perform effect =
-            case effect of
-                DesktopApp.WriteUserData content ->
-                    Ports.writeUserData content
-
-                DesktopApp.LoadUserData ->
-                    Ports.loadUserData ()
     in
     Browser.document
         { init =
@@ -108,3 +104,55 @@ program config =
                     |> Tuple.mapSecond performAll
         , view = p.view
         }
+
+
+runEffect : DesktopApp.Effect -> Cmd msg
+runEffect effect =
+    case effect of
+        DesktopApp.WriteUserData content ->
+            Ports.writeUserData content
+
+        DesktopApp.LoadUserData ->
+            Ports.loadUserData ()
+
+        DesktopApp.SetMenu menubar ->
+            Ports.setMenu menubar
+
+
+{-| Returned by the `view` function provided to [`program`](#program).
+
+This represents a single window that will be displayed to the user.
+
+-}
+type alias Window msg =
+    { title : String
+    , menubar : Menubar msg
+    , body : List (Html msg)
+    }
+
+
+{-| Defines the menu that will be shown for a particular window.
+-}
+type alias Menubar msg =
+    DesktopApp.Menubar.Menubar msg
+
+
+{-| Shows the default Electron menu.
+-}
+defaultMenu : Menubar msg
+defaultMenu =
+    DesktopApp.defaultMenu
+
+
+{-| Hides the menubar.
+-}
+noMenu : Menubar msg
+noMenu =
+    DesktopApp.noMenu
+
+
+{-| Shows a custom menu.
+-}
+customMenu : List (MenuItem msg) -> Menubar msg
+customMenu items =
+    DesktopApp.Menubar.CustomMenu items

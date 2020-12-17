@@ -13,7 +13,7 @@ class CustomWorld {
         init: "((), Cmd.none)",
         update: "\\_ model -> (model, Cmd.none)",
         subscriptions: "\\_ -> Sub.none",
-        view: "\\model -> { title = \"\", body = [ Html.text (Debug.toString model) ] }",
+        view: "\\model -> { title = \"\", menubar = DesktopApp.defaultMenu, body = [ Html.text (Debug.toString model) ] }",
         persistence: "Nothing"
       }
     };
@@ -35,13 +35,14 @@ class CustomWorld {
     const Main = this.Main;
     return new Promise(function(resolve) {
       const stream = fs.createWriteStream("src/Main.elm");
-      stream.write("import DesktopApp as App\n");
+      stream.write("module Main exposing (main)\n")
+      stream.write("import DesktopApp\n");
       stream.write("import DesktopApp.JsonMapping as JsonMapping\n");
       stream.write("import Html\n");
       stream.write("import Html.Events exposing (onClick)\n");
       stream.write("import Json.Encode as Json\n");
       stream.write(`${Main.Msg}\n`);
-      stream.write("main = App.program\n");
+      stream.write("main = DesktopApp.program\n");
       stream.write(`    { init = ${Main.main.init}\n`);
       stream.write(`    , update = ${Main.main.update}\n`);
       stream.write(`    , subscriptions = ${Main.main.subscriptions}\n`);

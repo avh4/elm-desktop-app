@@ -2,31 +2,38 @@ module DesktopApp.Testable exposing
     ( Effect(..)
     , Model
     , Msg(..)
+    , defaultMenu
+    , htmlClasses
+    , noMenu
     , program
     )
 
 import Browser
 import DesktopApp.JsonMapping as JsonMapping exposing (ObjectMapping)
+import DesktopApp.Menubar as Menubar exposing (Menubar)
 import DesktopApp.Ports as Ports
-import Dict exposing (Dict)
 import Html exposing (Html)
 import Html.Attributes exposing (style)
 import Json.Decode exposing (Decoder)
-import Json.Encode as Json
+import Json.Encode
 
 
 type Effect
     = WriteUserData String
     | LoadUserData
+    | SetMenu Json.Encode.Value
 
 
 type Model yourModel
     = Loading
     | Error String
-    | Model
-        { appModel : yourModel
-        , lastSaved : Maybe String
-        }
+    | Model (ActiveModel yourModel)
+
+
+type alias ActiveModel yourModel =
+    { appModel : yourModel
+    , lastSaved : Maybe String
+    }
 
 
 type Msg yourMsg
@@ -39,27 +46,75 @@ type alias Config model msg =
     { init : ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
-    , view : model -> Browser.Document msg
+    , view : model -> Window msg
     , persistence : Maybe (ObjectMapping model msg)
     }
+
+
+type alias Window msg =
+    { title : String
+    , menubar : Menubar msg
+    , body : List (Html msg)
+    }
+
+
+defaultMenu : Menubar msg
+defaultMenu =
+    Menubar.DefaultMenu
+
+
+noMenu : Menubar msg
+noMenu =
+    Menubar.NoMenu
 
 
 program :
     Config model msg
     ->
-        { init : () -> ( Model model, ( Cmd (Msg msg), List Effect ) )
-        , subscriptions : Model model -> Sub (Msg msg)
-        , update : Msg msg -> Model model -> ( Model model, ( Cmd (Msg msg), List Effect ) )
-        , view : Model model -> Browser.Document (Msg msg)
+        { init :
+            ()
+            ->
+                ( Model model
+                , ( Cmd (Msg msg), List Effect )
+                )
+        , subscriptions :
+            Model model
+            -> Sub (Msg msg)
+        , update :
+            Msg msg
+            -> Model model
+            ->
+                ( Model model
+                , ( Cmd (Msg msg), List Effect )
+                )
+        , view :
+            Model model
+            -> Browser.Document (Msg msg)
         }
 program config =
     { init =
         \() ->
-            ( Loading
-            , ( Cmd.none
-              , [ LoadUserData ]
-              )
-            )
+            case config.persistence of
+                Nothing ->
+                    let
+                        ( appModel, cmd ) =
+                            config.init
+                    in
+                    ( Model
+                        { appModel = appModel
+                        , lastSaved = Nothing
+                        }
+                    , ( Cmd.map AppMsg cmd
+                      , updateUi config appModel
+                      )
+                    )
+
+                Just _ ->
+                    ( Loading
+                    , ( Cmd.none
+                      , [ LoadUserData ]
+                      )
+                    )
     , update = update config
     , subscriptions = subscriptions config
     , view = view config
@@ -108,6 +163,7 @@ update config msg m =
                     , lastSaved = Nothing
                     }
                         |> saveFiles config cmd
+                        |> addEffects (updateUi config model)
 
                 UserDataLoaded (Just content) ->
                     case config.persistence of
@@ -158,6 +214,7 @@ update config msg m =
                     in
                     { model | appModel = newModel }
                         |> saveFiles config cmd
+                        |> addEffects (updateUi config newModel)
 
                 UserDataLoaded _ ->
                     -- We shouldn't be receiving data anymore, so ignore it
@@ -165,6 +222,12 @@ update config msg m =
                     ignore
 
 
+addEffects : appendable -> ( a, ( b, appendable ) ) -> ( a, ( b, appendable ) )
+addEffects newEffects ( model, ( cmd, effects ) ) =
+    ( model, ( cmd, newEffects ++ effects ) )
+
+
+saveFiles : Config model msg -> Cmd msg -> ActiveModel model -> ( Model model, ( Cmd (Msg msg), List Effect ) )
 saveFiles config cmd model =
     case config.persistence of
         Nothing ->
@@ -199,6 +262,16 @@ saveFiles config cmd model =
             )
 
 
+updateUi : Config model msg -> model -> List Effect
+updateUi config model =
+    let
+        { menubar } =
+            config.view model
+    in
+    [ SetMenu (Menubar.toJson (Debug.toString >> Json.Encode.string) menubar)
+    ]
+
+
 view : Config model msg -> Model model -> Browser.Document (Msg msg)
 view config m =
     case m of
@@ -216,6 +289,7 @@ view config m =
                     [ style "width" "100%"
                     , style "background" "#ece3e7"
                     , style "min-height" "100vh"
+                    , Html.Attributes.class htmlClasses.loading
                     ]
                     [ Html.div
                         [ style "opacity" "0.7"
@@ -242,3 +316,8 @@ view config m =
             { title = title
             , body = body |> List.map (Html.map AppMsg)
             }
+
+
+htmlClasses =
+    { loading = "_elm-desktop-app_loading"
+    }

@@ -26,6 +26,9 @@
          app.ports.loadUserData.subscribe(function(unit) {
              ipc.send('load-user-data', unit);
          });
+         app.ports.setMenu.subscribe(function(menubar) {
+             ipc.send('set-menu', menubar);
+         });
 
          ipc.on('user-data-loaded', function(event, content) {
              app.ports.userDataLoaded.send(content);

@@ -46,9 +46,10 @@ update msg model =
             { model | count = model.count + 1 }
 
 
-view : Model -> Browser.Document Msg
+view : Model -> DesktopApp.Window Msg
 view model =
     { title = ""
+    , menubar = DesktopApp.defaultMenu
     , body =
         [ Html.span
             [ style "padding" "0 20px" ]
