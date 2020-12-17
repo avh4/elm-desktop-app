@@ -1,6 +1,7 @@
 module DesktopApp exposing
     ( program, Program, Window, Model, Msg
     , Menubar, defaultMenu, noMenu
+    , customMenu
     )
 
 {-| This module lets you write desktop applications (for Mac, Linux, and Windows) in Elm. You must use the [`elm-desktop-app` ![](https://img.shields.io/npm/v/elm-desktop-app.svg)][npm-package]
@@ -18,6 +19,7 @@ See the [README](./) for an example of how to set up and build your application.
 
 import Browser
 import DesktopApp.JsonMapping as JsonMapping exposing (ObjectMapping)
+import DesktopApp.Menu exposing (MenuItem)
 import DesktopApp.Menubar
 import DesktopApp.Ports as Ports
 import DesktopApp.Testable as DesktopApp
@@ -114,7 +116,7 @@ runEffect effect =
             Ports.loadUserData ()
 
         DesktopApp.SetMenu menubar ->
-            Ports.setMenu (JsonMapping.encodeValue DesktopApp.Menubar.mapping menubar)
+            Ports.setMenu menubar
 
 
 {-| Returned by the `view` function provided to [`program`](#program).
@@ -124,26 +126,33 @@ This represents a single window that will be displayed to the user.
 -}
 type alias Window msg =
     { title : String
-    , menubar : Menubar
+    , menubar : Menubar msg
     , body : List (Html msg)
     }
 
 
 {-| Defines the menu that will be shown for a particular window.
 -}
-type alias Menubar =
-    DesktopApp.Menubar.Menubar
+type alias Menubar msg =
+    DesktopApp.Menubar.Menubar msg
 
 
 {-| Shows the default Electron menu.
 -}
-defaultMenu : Menubar
+defaultMenu : Menubar msg
 defaultMenu =
     DesktopApp.defaultMenu
 
 
 {-| Hides the menubar.
 -}
-noMenu : Menubar
+noMenu : Menubar msg
 noMenu =
     DesktopApp.noMenu
+
+
+{-| Shows a custom menu.
+-}
+customMenu : List (MenuItem msg) -> Menubar msg
+customMenu items =
+    DesktopApp.Menubar.CustomMenu items

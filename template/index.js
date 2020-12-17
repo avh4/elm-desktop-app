@@ -98,7 +98,7 @@ function createWindow(userDataFilename) {
   });
 
   ipc.on('set-menu', function(event, menubar) {
-    switch (menubar.$) {
+    switch (menubar) {
       case 'NoMenu':
         win.removeMenu();
         break;
@@ -106,7 +106,12 @@ function createWindow(userDataFilename) {
         win.setMenu(Menu.getApplicationMenu());
         break;
       default:
-        throw new Error("Internal error: Please report this to https://github.com/avh4/elm-desktop-app/issues Received unexpected set-menu event: " + JSON.stringify(menubar));
+        console.log(menubar);
+        var menu = Menu.buildFromTemplate(menubar);
+        win.setMenu(menu);
+        // TODO: set Applicaiton menu also
+//        win.alert(menubar);
+//        throw new Error("Internal error: Please report this to https://github.com/avh4/elm-desktop-app/issues Received unexpected set-menu event: " + JSON.stringify(menubar));
     }
   });
 }

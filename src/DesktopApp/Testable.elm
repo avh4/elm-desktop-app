@@ -10,17 +10,18 @@ module DesktopApp.Testable exposing
 
 import Browser
 import DesktopApp.JsonMapping as JsonMapping exposing (ObjectMapping)
-import DesktopApp.Menubar exposing (Menubar)
+import DesktopApp.Menubar as Menubar exposing (Menubar)
 import DesktopApp.Ports as Ports
 import Html exposing (Html)
 import Html.Attributes exposing (style)
 import Json.Decode exposing (Decoder)
+import Json.Encode
 
 
 type Effect
     = WriteUserData String
     | LoadUserData
-    | SetMenu Menubar
+    | SetMenu Json.Encode.Value
 
 
 type Model yourModel
@@ -52,19 +53,19 @@ type alias Config model msg =
 
 type alias Window msg =
     { title : String
-    , menubar : Menubar
+    , menubar : Menubar msg
     , body : List (Html msg)
     }
 
 
-defaultMenu : Menubar
+defaultMenu : Menubar msg
 defaultMenu =
-    DesktopApp.Menubar.DefaultMenu
+    Menubar.DefaultMenu
 
 
-noMenu : Menubar
+noMenu : Menubar msg
 noMenu =
-    DesktopApp.Menubar.NoMenu
+    Menubar.NoMenu
 
 
 program :
@@ -267,7 +268,7 @@ updateUi config model =
         { menubar } =
             config.view model
     in
-    [ SetMenu menubar
+    [ SetMenu (Menubar.toJson (Debug.toString >> Json.Encode.string) menubar)
     ]
 
 
